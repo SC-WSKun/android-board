@@ -2,7 +2,7 @@ import ImageContainer from "@/components/ui/ImageContainer";
 import { useGlobal } from "@/store/globalContext";
 import { router } from "expo-router";
 import { useEffect } from "react";
-import { StyleSheet, ImageBackground, View, Text } from "react-native";
+import { StyleSheet, View, Text } from "react-native";
 import { NAVIGATION_MAP } from "./_layout";
 
 export default function NavigationScreen() {

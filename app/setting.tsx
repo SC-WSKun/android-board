@@ -1,5 +1,5 @@
 import ImageContainer from "@/components/ui/ImageContainer";
-import { StyleSheet, ImageBackground, View, Text } from "react-native";
+import { StyleSheet, View, Text } from "react-native";
 
 export default function SettingScreen() {
   return (
