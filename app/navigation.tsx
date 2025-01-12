@@ -1,12 +1,30 @@
 import ImageContainer from "@/components/ui/ImageContainer";
+import { useGlobal } from "@/store/globalContext";
+import { router } from "expo-router";
+import { useEffect } from "react";
 import { StyleSheet, ImageBackground, View, Text } from "react-native";
+import { NAVIGATION_MAP } from "./_layout";
 
 export default function NavigationScreen() {
+  const { foxgloveClientConnected } = useGlobal();
+  useEffect(() => {
+    if (!foxgloveClientConnected()) {
+      router.push(NAVIGATION_MAP.SETTING);
+    }
+  }, [foxgloveClientConnected]);
   return (
     <ImageContainer>
-      <Text>请选择您要前往的目的地：</Text>
+      <View style={styles.navigationView}>
+        <Text>请选择您要前往的目的地：</Text>
+      </View>
     </ImageContainer>
   );
 }
 
-const styles = StyleSheet.create({});
+const styles = StyleSheet.create({
+  navigationView: {
+    flex: 1,
+    alignItems: "flex-start",
+    justifyContent: "flex-start",
+  },
+});
