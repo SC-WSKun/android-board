@@ -4,7 +4,7 @@ import React, { createContext, useState, useContext, ReactNode } from "react";
 
 interface GlobalContextType {
   // Foxglove
-  initClient: (socket: WebSocket, fn: any) => void;
+  initClient: (wsUrl: string ) => Promise<any>;
   closeClient: () => void;
   foxgloveClientConnected: () => boolean;
   subscribeTopic: (topic: string) => void;
