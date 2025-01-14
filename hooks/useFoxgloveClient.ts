@@ -155,7 +155,7 @@ export function useFoxgloveClient() {
    */
   function callService(
     srvName: string,
-    payload: { [key: string]: any },
+    payload?: { [key: string]: any },
   ): Promise<any> {
     if (!client) {
       console.error('Client not initialized!');

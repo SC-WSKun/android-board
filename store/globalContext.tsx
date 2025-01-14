@@ -12,7 +12,7 @@ interface GlobalContextType {
   listenMessage: (callback: (...args: any) => void) => void;
   stopListenMessage: (callback: (...args: any) => void) => void;
   publishMessage: (channelId: number, message: any) => void;
-  callService: (srvName: string, payload: { [key: string]: any }) => Promise<any>;
+  callService: (srvName: string, payload?: { [key: string]: any }) => Promise<any>;
   advertiseTopic: (channel: ClientChannelWithoutId) => void;
   unAdvertiseTopic: (channelId: number) => void;
   readMsgWithSubId: (subId: number, data: DataView) => any;
