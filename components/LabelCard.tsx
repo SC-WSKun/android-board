@@ -1,19 +1,19 @@
-import { useGlobal } from "@/store/globalContext";
-import { useEffect } from "react";
-import { Image, Pressable, StyleSheet } from "react-native";
-import { View } from "react-native-reanimated/lib/typescript/Animated";
+import { useGlobal } from '@/store/globalContext'
+import { useEffect } from 'react'
+import { Image, Pressable, StyleSheet } from 'react-native'
+import { View } from 'react-native-reanimated/lib/typescript/Animated'
 interface Props {
-  imgUrl?: string;
-  labelName: string;
-  clickHandler: () => void;
+  imgUrl?: string
+  labelName: string
+  clickHandler: () => void
 }
 export function LabelCard(props: Props) {
-  const { imgUrl, labelName, clickHandler } = props;
-  const global = useGlobal();
+  const { imgUrl, labelName, clickHandler } = props
+  const global = useGlobal()
 
-  useEffect(()=>{
-    global.callService('/label_manager/get_labels', {}).then(res=>{
-        console.log(res)
+  useEffect(() => {
+    global.callService('/label_manager/get_labels', {}).then(res => {
+      console.log(res)
     })
   })
   return (
@@ -22,11 +22,11 @@ export function LabelCard(props: Props) {
         <Image source={{ uri: imgUrl }} />
       </View>
     </Pressable>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
-    labelCard: {
-        backgroundColor: 'white',
-    }
-});
+  labelCard: {
+    backgroundColor: 'white',
+  },
+})

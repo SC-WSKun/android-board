@@ -2,70 +2,77 @@ import {
   DarkTheme,
   DefaultTheme,
   ThemeProvider,
-} from "@react-navigation/native";
-import { useFonts } from "expo-font";
-import { Stack } from "expo-router";
-import * as SplashScreen from "expo-splash-screen";
-import { useEffect } from "react";
-import "react-native-reanimated";
+} from '@react-navigation/native'
+import { useFonts } from 'expo-font'
+import { Stack } from 'expo-router'
+import * as SplashScreen from 'expo-splash-screen'
+import { useEffect } from 'react'
+import 'react-native-reanimated'
 
-import { useColorScheme } from "@/hooks/useColorScheme";
-import { GlobalProvider, useGlobal } from "@/store/globalContext";
+import { useColorScheme } from '@/hooks/useColorScheme'
+import { GlobalProvider, useGlobal } from '@/store/globalContext'
 
 const ROUTER_MAP = {
-  HOME: "index" as const,
-  NAVIGATION: "navigation" as const,
-  SETTING: "setting" as const,
-  NOT_FOUND: "+not-found" as const,
+  HOME: 'index' as const,
+  NAVIGATION: 'navigation' as const,
+  SETTING: 'setting' as const,
+  NOT_FOUND: '+not-found' as const,
 }
 
 // 使用映射生成 NAVIGATION_MAP，因为 expo-router 跳转的时候需要使用 / 开头
 type NavigationMapType = {
-  [K in keyof typeof ROUTER_MAP]: `/${typeof ROUTER_MAP[K]}`;
-};
+  [K in keyof typeof ROUTER_MAP]: `/${(typeof ROUTER_MAP)[K]}`
+}
 
 export const NAVIGATION_MAP: NavigationMapType = {
   HOME: `/${ROUTER_MAP.HOME}`,
   NAVIGATION: `/${ROUTER_MAP.NAVIGATION}`,
   SETTING: `/${ROUTER_MAP.SETTING}`,
   NOT_FOUND: `/${ROUTER_MAP.NOT_FOUND}`,
-};
+}
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
-SplashScreen.preventAutoHideAsync();
+SplashScreen.preventAutoHideAsync()
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
+  const colorScheme = useColorScheme()
   const [loaded] = useFonts({
-    SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
-  });
+    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
+  })
 
   const [xiaxingLoaded] = useFonts({
-    XiaXing: require("../assets/fonts/Slidexiaxing-Regular.ttf"),
-  });
-
+    XiaXing: require('../assets/fonts/Slidexiaxing-Regular.ttf'),
+  })
 
   useEffect(() => {
     if (xiaxingLoaded && loaded) {
-      SplashScreen.hideAsync();
+      SplashScreen.hideAsync()
     }
-  }, [xiaxingLoaded, loaded]);
-
+  }, [xiaxingLoaded, loaded])
 
   if (!loaded) {
-    return null;
+    return null
   }
 
   return (
-    <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <GlobalProvider>
         <Stack>
-          <Stack.Screen name={ROUTER_MAP.HOME} options={{ headerShown: false }} />
-          <Stack.Screen name={ROUTER_MAP.NAVIGATION} options={{ headerShown: false }} />
-          <Stack.Screen name={ROUTER_MAP.SETTING} options={{ headerShown: false }} />
+          <Stack.Screen
+            name={ROUTER_MAP.HOME}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name={ROUTER_MAP.NAVIGATION}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name={ROUTER_MAP.SETTING}
+            options={{ headerShown: false }}
+          />
           <Stack.Screen name={ROUTER_MAP.NOT_FOUND} />
         </Stack>
       </GlobalProvider>
     </ThemeProvider>
-  );
+  )
 }

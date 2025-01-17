@@ -1,73 +1,74 @@
-import _ from 'lodash';
+import _ from 'lodash'
 import {
   FoxgloveClient,
   type Channel,
   type ClientChannelWithoutId,
   type Service,
   type ServerInfo,
-} from '@foxglove/ws-protocol';
-import { MessageWriter, MessageReader } from '@foxglove/rosmsg2-serialization';
-import { parse as parseMessageDefinition } from '@foxglove/rosmsg';
+} from '@foxglove/ws-protocol'
+import { MessageWriter, MessageReader } from '@foxglove/rosmsg2-serialization'
+import { parse as parseMessageDefinition } from '@foxglove/rosmsg'
 
 type Sub = {
-  subId: number;
-  channelId: number;
-};
+  subId: number
+  channelId: number
+}
 
 export function useFoxgloveClient() {
-  let client: FoxgloveClient | null = null;
-  let channels: Map<number, Channel> = new Map();
-  let services: Service[] = [];
-  let subs: Sub[] = [];
-  let advertisedChannels: any[] = [];
-  let msgEncoding = 'cdr';
-  let callServiceId = 0;
+  let client: FoxgloveClient | null = null
+  let channels: Map<number, Channel> = new Map()
+  let services: Service[] = []
+  let subs: Sub[] = []
+  let advertisedChannels: any[] = []
+  let msgEncoding = 'cdr'
+  let callServiceId = 0
 
   const foxgloveClientConnected = () => {
-    return client !== null;
-  };
+    return client !== null
+  }
   /**
    * init foxglove client & storage channels and services
    */
   async function initClient(wsUrl: string) {
     return new Promise((resolve, reject) => {
-      const socket = new WebSocket(`ws://${wsUrl}:8765`, [FoxgloveClient.SUPPORTED_SUBPROTOCOL]);
+      const socket = new WebSocket(`ws://${wsUrl}:8765`, [
+        FoxgloveClient.SUPPORTED_SUBPROTOCOL,
+      ])
       client = new FoxgloveClient({
         ws: socket,
-      });
+      })
       client.on('advertise', (rx_channels: Channel[]) => {
         rx_channels.forEach((channel: Channel) => {
-          channels.set(channel.id, channel);
-        });
+          channels.set(channel.id, channel)
+        })
         // console.log('current channels:', channels);
-      });
+      })
       client.on('unadvertise', (channelIds: number[]) => {
         channelIds.forEach((id: number) => {
-          channels.delete(id);
-        });
-        console.log('current', channels);
-      });
+          channels.delete(id)
+        })
+        console.log('current', channels)
+      })
       client.on('advertiseServices', (rx_services: Service[]) => {
-        services = services.concat(rx_services);
-      });
+        services = services.concat(rx_services)
+      })
       client.on('open', () => {
-        console.log('Connected to Foxglove server!');
-        resolve('foxgloveClient initialized');
-      });
+        console.log('Connected to Foxglove server!')
+        resolve('foxgloveClient initialized')
+      })
       client.on('error', e => {
-        console.error('foxgloveClient error:', e);
-        reject('foxgloveClient init error');
-      });
+        console.error('foxgloveClient error:', e)
+        reject('foxgloveClient init error')
+      })
       client.on('close', () => {
-        console.log('Disconnected from Foxglove server!');
-      });
+        console.log('Disconnected from Foxglove server!')
+      })
       client.on('serverInfo', (serverInfo: ServerInfo) => {
         if (serverInfo.supportedEncodings) {
-          msgEncoding = serverInfo.supportedEncodings[0];
+          msgEncoding = serverInfo.supportedEncodings[0]
         }
-      });
-    });
-
+      })
+    })
   }
 
   /**
@@ -77,16 +78,16 @@ export function useFoxgloveClient() {
     if (client) {
       // unadvertise all the channel
       advertisedChannels.forEach((channel: any) => {
-        client?.unadvertise(channel.id);
-      });
+        client?.unadvertise(channel.id)
+      })
       // unsubscribe all the channel from server
       subs.forEach((sub: Sub) => {
-        client?.unsubscribe(sub.subId);
-      });
-      client.close();
-      client = null;
+        client?.unsubscribe(sub.subId)
+      })
+      client.close()
+      client = null
     }
-    console.log('client closed');
+    console.log('client closed')
   }
 
   /**
@@ -96,16 +97,16 @@ export function useFoxgloveClient() {
    */
   function subscribeTopic(topic: string) {
     if (!client) {
-      return Promise.reject('Client not initialized');
+      return Promise.reject('Client not initialized')
     }
     // console.log(channels.values())
-    const channel = _.find(Array.from(channels.values()), { topic });
+    const channel = _.find(Array.from(channels.values()), { topic })
     if (!channel) {
-      return Promise.reject('Channel not found');
+      return Promise.reject('Channel not found')
     }
-    const subId = client.subscribe(channel.id);
-    subs.push({ subId, channelId: channel.id });
-    return Promise.resolve(subId);
+    const subId = client.subscribe(channel.id)
+    subs.push({ subId, channelId: channel.id })
+    return Promise.resolve(subId)
   }
 
   /**
@@ -115,12 +116,12 @@ export function useFoxgloveClient() {
    */
   function unSubscribeTopic(subId: number) {
     if (!client) {
-      console.error('Client not initialized!');
-      return;
+      console.error('Client not initialized!')
+      return
     }
     // remove from subs list
-    subs = _.reject(subs, { subId });
-    client.unsubscribe(subId);
+    subs = _.reject(subs, { subId })
+    client.unsubscribe(subId)
   }
 
   /**
@@ -131,20 +132,20 @@ export function useFoxgloveClient() {
    */
   function publishMessage(channelId: number, message: any) {
     if (!client) {
-      console.error('Client not initialized!');
-      return;
+      console.error('Client not initialized!')
+      return
     }
-    const channel = _.find(advertisedChannels, { id: channelId });
+    const channel = _.find(advertisedChannels, { id: channelId })
     if (!channel) {
-      console.error('Channel not found!');
-      return;
+      console.error('Channel not found!')
+      return
     }
     const parseDefinitions = parseMessageDefinition(channel.schema, {
       ros2: true,
-    });
-    const writer = new MessageWriter(parseDefinitions);
-    const uint8Array = writer.writeMessage(message);
-    client.sendMessage(channelId, uint8Array);
+    })
+    const writer = new MessageWriter(parseDefinitions)
+    const uint8Array = writer.writeMessage(message)
+    client.sendMessage(channelId, uint8Array)
   }
 
   /**
@@ -158,26 +159,26 @@ export function useFoxgloveClient() {
     payload?: { [key: string]: any },
   ): Promise<any> {
     if (!client) {
-      console.error('Client not initialized!');
-      return Promise.reject('Client not initialized!');
+      console.error('Client not initialized!')
+      return Promise.reject('Client not initialized!')
     }
-    const srv: Service | undefined = _.find(services, { name: srvName });
+    const srv: Service | undefined = _.find(services, { name: srvName })
     if (!srv) {
-      console.error('Service not found!');
-      return Promise.reject('Service not found!');
+      console.error('Service not found!')
+      return Promise.reject('Service not found!')
     }
     const parseReqDefinitions = parseMessageDefinition(srv?.requestSchema!, {
       ros2: true,
-    });
-    const writer = new MessageWriter(parseReqDefinitions);
-    const uint8Array = writer.writeMessage(payload);
+    })
+    const writer = new MessageWriter(parseReqDefinitions)
+    const uint8Array = writer.writeMessage(payload)
     client.sendServiceCallRequest({
       serviceId: srv?.id!,
       callId: callServiceId + 1,
       encoding: msgEncoding,
       data: new DataView(uint8Array.buffer),
-    });
-    callServiceId = callServiceId + 1;
+    })
+    callServiceId = callServiceId + 1
     return new Promise(resolve => {
       // 将监听回调函数抽离的目的是避免监听未及时off造成的内存泄漏
       function serviceResponseHandler(response: any) {
@@ -186,17 +187,17 @@ export function useFoxgloveClient() {
           {
             ros2: true,
           },
-        );
-        const reader = new MessageReader(parseResDefinitions);
+        )
+        const reader = new MessageReader(parseResDefinitions)
         // console.log('res.data', response.data);
         // console.log('reader', reader);
 
-        const res = reader.readMessage(response.data);
-        resolve(res);
-        client?.off('serviceCallResponse', serviceResponseHandler);
+        const res = reader.readMessage(response.data)
+        resolve(res)
+        client?.off('serviceCallResponse', serviceResponseHandler)
       }
-      client!.on('serviceCallResponse', serviceResponseHandler);
-    });
+      client!.on('serviceCallResponse', serviceResponseHandler)
+    })
   }
 
   /**
@@ -206,15 +207,15 @@ export function useFoxgloveClient() {
    */
   function advertiseTopic(channel: ClientChannelWithoutId) {
     if (!client) {
-      console.error('Client not initialized!');
-      return;
+      console.error('Client not initialized!')
+      return
     }
-    const channelId = client.advertise(channel);
+    const channelId = client.advertise(channel)
     advertisedChannels.push({
       id: channelId,
       ...channel,
-    });
-    return channelId;
+    })
+    return channelId
   }
 
   /**
@@ -224,12 +225,12 @@ export function useFoxgloveClient() {
    */
   function unAdvertiseTopic(channelId: number) {
     if (!client) {
-      console.error('Client not initialized!');
-      return;
+      console.error('Client not initialized!')
+      return
     }
     // remove from advertised channels list
-    advertisedChannels = _.reject(advertisedChannels, { id: channelId });
-    client.unadvertise(channelId);
+    advertisedChannels = _.reject(advertisedChannels, { id: channelId })
+    client.unadvertise(channelId)
   }
 
   /**
@@ -240,31 +241,31 @@ export function useFoxgloveClient() {
    */
   function listenMessage(callback: (...args: any) => void) {
     if (!client) {
-      console.error('Client not initialized!');
-      return;
+      console.error('Client not initialized!')
+      return
     }
-    client.on('message', callback);
+    client.on('message', callback)
   }
 
   function stopListenMessage(callback: (...args: any) => void) {
     if (!client) {
-      console.error('Client not initialized!');
-      return;
+      console.error('Client not initialized!')
+      return
     }
-    client.off('message', callback);
+    client.off('message', callback)
   }
 
   function readMsgWithSubId(subId: number, data: DataView) {
-    const sub = _.find(subs, { subId });
+    const sub = _.find(subs, { subId })
     if (sub) {
-      const channel = channels.get(sub.channelId);
+      const channel = channels.get(sub.channelId)
       const parseDefinitions = parseMessageDefinition(channel?.schema!, {
         ros2: true,
-      });
-      const reader = new MessageReader(parseDefinitions);
-      return reader.readMessage(data);
+      })
+      const reader = new MessageReader(parseDefinitions)
+      return reader.readMessage(data)
     } else {
-      console.error('sub not found');
+      console.error('sub not found')
     }
   }
 
@@ -282,5 +283,5 @@ export function useFoxgloveClient() {
     advertiseTopic,
     unAdvertiseTopic,
     readMsgWithSubId,
-  };
+  }
 }
