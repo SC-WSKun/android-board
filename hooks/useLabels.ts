@@ -26,18 +26,20 @@ export function useLabels() {
     const getLabels = async () => {
         return global.callService('/nav2_extended/get_labels')
     }
+
     const navigateToLabel = async (label: PositionLabel) => {
         const newGoalSeq = goalSeq + 1;
+        const encode_label_name = encoder.encode(label.label_name).toString();
+        console.log("encode:", encode_label_name)
         const labelNavData = {
             header: {
-                seq: newGoalSeq,
                 stamp: {
-                    secs: Math.floor(Date.now() / 1000),
-                    nsecs: (Date.now() / 1000) * 1000000,
+                    sec: Math.floor(Date.now() / 1000),
+                    nanosec: (Date.now() / 1000) * 1000000,
                 },
                 frame_id: 'map',
             },
-            label_name: encoder.encode(label.label_name),
+            label_name: encode_label_name,
         }
         setGoalSeq(newGoalSeq);
         return global.callService('/nav2_extended/label_goal_pose', labelNavData)

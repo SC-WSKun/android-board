@@ -7,7 +7,7 @@ import {
   View,
   Text,
   TouchableOpacity,
-  Dimensions,
+  useWindowDimensions,
 } from "react-native";
 import { NAVIGATION_MAP } from "./_layout";
 import { PositionLabel, useLabels } from "@/hooks/useLabels";
@@ -19,8 +19,8 @@ export default function NavigationScreen() {
   const { getLabels, navigateToLabel } = useLabels();
 
   // 获取屏幕宽度
-  const screenWidth = Dimensions.get("window").width;
-  const cardWidth = (screenWidth * 0.9 - 40) / 3 - 100; // 每行显示 3 个卡片，计算卡片宽度
+  const {height} = useWindowDimensions();
+  const cardWidth = height / 3; // 每行显示 3 个卡片，计算卡片宽度
 
   // 处理点击导航事件
   const handleNavigation = (label: PositionLabel) => {
