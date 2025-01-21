@@ -1,43 +1,21 @@
+import { useDrawContext } from '@/store/drawContext'
 import { useGlobal } from '@/store/globalContext'
 import { useEffect, useState } from 'react'
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
 import Icon from 'react-native-vector-icons/FontAwesome'
 
-export interface Map {
-  map_name: string
-  map_type: number
-  nav_mode: number
-}
-
 export function MapSelectView() {
   const [mapList, setMapList] = useState([])
   const { callService } = useGlobal()
-  // 获取屏幕宽度
+  const { changeMap, setCurrentView } = useDrawContext()
 
-  const handleSelectMap = (map: Map) => {
-    callService('/tiered_nav_state_machine/get_grid_map', {
-      info: map,
-    })
-    // .then(res => {
-    //   state.drawManage.unSubscribeCarPosition()
-    //   state.drawManage.unSubscribeScanPoints()
-    //   unSubscribeMapTopic()
-    //   const wrap = document.getElementById('navigationMap') as HTMLElement
-    //   state.drawManage.drawGridMap(wrap, res.map, true)
-    //   state.curState = STATE_MAP.PREVIEWING
-    //   globalStore.setLoading(false)
-    //   initPose()
-    //   globalStore.closeModal()
-    //   state.mapName = record.map_name
-    // })
-    // .catch(err => {
-    //   console.log(err)
-    //   globalStore.setLoading(false)
-    // })
+  const handleSelectMap = (map: RobotMap) => {
+    changeMap(map)
+    setCurrentView('navigation')
   }
 
   // 渲染地图卡片
-  const renderItem = (map: Map) => (
+  const renderItem = (map: RobotMap) => (
     <TouchableOpacity
       key={map.map_name}
       style={[styles.card]}
@@ -55,8 +33,8 @@ export function MapSelectView() {
     </TouchableOpacity>
   )
 
+  // 获取地图列表
   useEffect(() => {
-    // 获取地图列表
     callService('/tiered_nav_conn_graph/list_maps', {})
       .then(res => {
         console.log(res.maps.length)

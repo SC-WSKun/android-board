@@ -1,29 +1,29 @@
 import ImageContainer from '@/components/ui/ImageContainer'
 import { useGlobal } from '@/store/globalContext'
 import { router } from 'expo-router'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo } from 'react'
 import { NAVIGATION_MAP } from './_layout'
 import { LabelView } from '@/components/LabelView'
 import { MapSelectView } from '@/components/MapSelectView'
+import { RobotMap } from '@/components/RobotMap'
+import { DrawContextProvider, useDrawContext } from '@/store/drawContext'
 
-type NavigationView = 'label' | 'select-map' | 'navigation'
-
-export default function NavigationScreen() {
+function NavigationScreen() {
   const { foxgloveClientConnected } = useGlobal()
-  const [currentView, setCurrentView] = useState<NavigationView>('select-map')
+  const { currentView } = useDrawContext()
 
-  const renderView = () => {
+  const renderView = useMemo(() => {
     switch (currentView) {
       case 'label':
         return <LabelView />
       case 'select-map':
         return <MapSelectView />
       case 'navigation':
-        return <></>
+        return <RobotMap />
       default:
         return <></>
     }
-  }
+  }, [currentView])
 
   // 如果 foxgloveClient 未初始化，则跳转到设置页面
   useEffect(() => {
@@ -32,5 +32,15 @@ export default function NavigationScreen() {
     }
   }, [foxgloveClientConnected])
 
-  return <ImageContainer>{renderView()}</ImageContainer>
+  return <ImageContainer>{renderView}</ImageContainer>
 }
+
+const NavigationScreenContainer = () => {
+  return (
+    <DrawContextProvider>
+      <NavigationScreen />
+    </DrawContextProvider>
+  )
+}
+
+export default NavigationScreenContainer
