@@ -37,6 +37,11 @@ export function RobotMap() {
   const { callService } = useGlobal()
   const { drawingMap } = useDrawContext()
 
+  // TODO: 重置地图监听
+  const clearListener = () => {
+    console.log('clearListener')
+  }
+
   useEffect(() => {
     callService('/tiered_nav_state_machine/get_grid_map', {
       info: drawingMap,
