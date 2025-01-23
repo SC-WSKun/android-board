@@ -2,6 +2,7 @@ import { useDrawContext } from '@/store/drawContext'
 import { useGlobal } from '@/store/globalContext'
 import { useEffect } from 'react'
 import { View, Text } from 'react-native'
+import Canvas from 'react-native-canvas';
 
 type MapInfo = {
   width: number
@@ -48,13 +49,11 @@ export function RobotMap() {
     })
       .then(res => {
         console.log('res:', res)
-        // state.drawManage.unSubscribeCarPosition()
-        // state.drawManage.unSubscribeScanPoints()
+        clearListener()
         // unSubscribeMapTopic()
         // const wrap = document.getElementById('navigationMap') as HTMLElement
         // state.drawManage.drawGridMap(wrap, res.map, true)
         // state.curState = STATE_MAP.PREVIEWING
-        // globalStore.setLoading(false)
         // initPose()
         // globalStore.closeModal()
         // state.mapName = record.map_name
