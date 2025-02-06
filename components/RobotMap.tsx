@@ -1,55 +1,58 @@
 import { useDrawContext } from '@/store/drawContext'
 import { useGlobal } from '@/store/globalContext'
-import { useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { View, Text } from 'react-native'
-import Canvas from 'react-native-canvas';
+import Canvas from 'react-native-canvas'
 
-type MapInfo = {
-  width: number
-  height: number
-  resolution: number
-  origin: {
-    position: {
-      x: number
-      y: number
-      z: number
-    }
-    orientation: Quaternion
-  }
-  map_load_time: {
-    nsec: number
-    sec: number
-  }
+interface IRobotMapProps {
+  fn: any
 }
 
-type GridMap = {
-  data: Uint8Array
-  header: {
-    frame_id: string
-    stamp: {
-      nesc: number
-      sec: number
-    }
-  }
-  info: MapInfo
-}
-
-export function RobotMap() {
+export function RobotMap(props: IRobotMapProps) {
+  const canvas = useRef<Canvas | null>(null)
   const { callService } = useGlobal()
   const { drawingMap } = useDrawContext()
+  const [canvasSize] = useState({ width: 1000, height: 600 })
+  const [resizing, setResizing] = useState(true)
 
   // TODO: 重置地图监听
   const clearListener = () => {
     console.log('clearListener')
   }
 
+  // 渲染canvas
+  const renderCanvas = async (type: string) => {
+    if (!canvas.current) return
+    const ctx = await canvas.current.getContext('2d')
+    ctx.clearRect(0, 0, canvasSize.width, canvasSize.height) // Clear the canvas before drawing
+    ctx.fillStyle = 'purple'
+    ctx.fillRect(0, 0, 100, 100)
+
+    ctx.fillStyle = 'red'
+    ctx.fillRect(500, 500, 100, 100)
+  }
+
+  // 这个canvas变换大小的时候会导致渲染丢失，也没找到对应的回调监听，先搞个500ms延迟用着
+  const waitingResizeCanvas = () => {
+    setResizing(true)
+    setTimeout(() => {
+      setResizing(false)
+    }, 500)
+  }
+
   useEffect(() => {
+    waitingResizeCanvas()
+  }, [canvasSize])
+
+  useEffect(() => {
+    if (resizing) return
     callService('/tiered_nav_state_machine/get_grid_map', {
       info: drawingMap,
     })
       .then(res => {
-        console.log('res:', res)
+        // console.log('res:', res.map)
         clearListener()
+        renderCanvas('navigation')
         // unSubscribeMapTopic()
         // const wrap = document.getElementById('navigationMap') as HTMLElement
         // state.drawManage.drawGridMap(wrap, res.map, true)
@@ -61,10 +64,17 @@ export function RobotMap() {
       .catch(err => {
         console.log(err)
       })
-  }, [drawingMap])
+  }, [resizing, drawingMap])
   return (
     <View>
-      <Text>RobotMap</Text>
+      <Canvas
+        ref={(canvasRef: Canvas) => {
+          if (!canvasRef) return
+          canvasRef.width = canvasSize.width
+          canvasRef.height = canvasSize.height
+          canvas.current = canvasRef
+        }}
+      />
     </View>
   )
 }

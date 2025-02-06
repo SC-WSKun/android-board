@@ -13,7 +13,7 @@ import {
 } from 'react-native'
 
 export default function SettingScreen() {
-  const [ipAddress, setIpAddress] = useState<string>('') // 存储 IP 地址
+  const [ipAddress, setIpAddress] = useState<string>('192.168.1.211') // 存储 IP 地址
   const [isValid, setIsValid] = useState<boolean>(true) // 存储 IP 地址的有效性状态
   const global = useGlobal()
 
