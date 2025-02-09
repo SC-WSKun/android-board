@@ -16,7 +16,7 @@ interface DrawProviderProps {
 const DrawContext = createContext<DrawContextType | undefined>(undefined)
 
 export function DrawContextProvider({ children }: DrawProviderProps) {
-  const [currentView, setCurrentView] = useState<NavigationView>('navigation')
+  const [currentView, setCurrentView] = useState<NavigationView>('select-map')
   const [drawingMap, setDrawingMap] = useState<RobotMap | undefined>(undefined)
 
   const changeMap = (map: RobotMap) => {
@@ -24,7 +24,12 @@ export function DrawContextProvider({ children }: DrawProviderProps) {
   }
   return (
     <DrawContext.Provider
-      value={{ currentView, drawingMap, changeMap, setCurrentView }}
+      value={{
+        currentView,
+        drawingMap,
+        changeMap,
+        setCurrentView,
+      }}
     >
       {children}
     </DrawContext.Provider>
