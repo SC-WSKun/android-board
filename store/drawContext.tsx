@@ -16,7 +16,7 @@ interface DrawProviderProps {
 const DrawContext = createContext<DrawContextType | undefined>(undefined)
 
 export function DrawContextProvider({ children }: DrawProviderProps) {
-  const [currentView, setCurrentView] = useState<NavigationView>('select-map')
+  const [currentView, setCurrentView] = useState<NavigationView>('navigation')
   const [drawingMap, setDrawingMap] = useState<RobotMap | undefined>(undefined)
 
   const changeMap = (map: RobotMap) => {

@@ -2,7 +2,15 @@ import { useDrawContext } from '@/store/drawContext'
 import { useGlobal } from '@/store/globalContext'
 import { useEffect, useState } from 'react'
 import { View } from 'react-native'
-import { Canvas, Circle, Group } from '@shopify/react-native-skia'
+import {
+  Canvas,
+  Circle,
+  Group,
+  Skia,
+  AlphaType,
+  ColorType,
+  Image,
+} from '@shopify/react-native-skia'
 
 interface IRobotMapProps {
   fn: any
@@ -13,14 +21,30 @@ export function RobotMap(props: IRobotMapProps) {
   const { drawingMap } = useDrawContext()
   const [mapInfo, setMapInfo] = useState<any>(undefined)
   const [mapData, setMapData] = useState<any>(undefined)
-  const width = 256
-  const height = 256
+  const width = 1000
+  const height = 600
   const r = width * 0.33
 
-  // TODO: 重置地图监听
-  const clearListener = () => {
-    console.log('clearListener')
+  const pixels = new Uint8Array(1000 * 600 * 4)
+  pixels.fill(255)
+  let i = 0
+  for (let x = 0; x < 1000; x++) {
+    for (let y = 0; y < 600; y++) {
+      pixels[i] = (x * y) % 255
+      i += 4
+    }
   }
+  const data = Skia.Data.fromBytes(pixels)
+  const img = Skia.Image.MakeImage(
+    {
+      width: 1000,
+      height: 600,
+      alphaType: AlphaType.Opaque,
+      colorType: ColorType.RGBA_8888,
+    },
+    data,
+    1000 * 4,
+  )
 
   /**
    * 获取地图数据
@@ -45,18 +69,26 @@ export function RobotMap(props: IRobotMapProps) {
         setMapInfo(undefined)
       }
     }
-
+    return
     fetchData()
   }, [drawingMap])
 
   return (
-    <View>
+    <View
+      style={{
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
       <Canvas style={{ width, height }}>
-        <Group blendMode='multiply'>
-          <Circle cx={r} cy={r} r={r} color='cyan' />
-          <Circle cx={width - r} cy={r} r={r} color='magenta' />
-          <Circle cx={width / 2} cy={width - r} r={r} color='yellow' />
-        </Group>
+        <Image
+          image={img}
+          fit='contain'
+          x={0}
+          y={0}
+          width={1000}
+          height={600}
+        />
       </Canvas>
     </View>
   )
