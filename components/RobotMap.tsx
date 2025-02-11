@@ -1,11 +1,9 @@
 import { useDrawContext } from '@/store/drawContext'
 import { useGlobal } from '@/store/globalContext'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { View } from 'react-native'
 import {
   Canvas,
-  Circle,
-  Group,
   Skia,
   AlphaType,
   ColorType,
@@ -17,34 +15,56 @@ interface IRobotMapProps {
 }
 
 export function RobotMap(props: IRobotMapProps) {
+  const width = 1000 // canvas宽度
+  const height = 600 // canvas高度
   const { callService } = useGlobal()
   const { drawingMap } = useDrawContext()
-  const [mapInfo, setMapInfo] = useState<any>(undefined)
-  const [mapData, setMapData] = useState<any>(undefined)
-  const width = 1000
-  const height = 600
-  const r = width * 0.33
+  const [mapInfo, setMapInfo] = useState<any>(undefined) // 地图的长宽等信息
+  const [mapData, setMapData] = useState<any>(undefined) // 地图的点云信息
+  const [bgImage, setBgImage] = useState<any>(undefined)
 
-  const pixels = new Uint8Array(1000 * 600 * 4)
-  pixels.fill(255)
-  let i = 0
-  for (let x = 0; x < 1000; x++) {
-    for (let y = 0; y < 600; y++) {
-      pixels[i] = (x * y) % 255
-      i += 4
+  /**
+   * 渲染地图，赋值给image
+   */
+  const renderMapImage = useCallback(() => {
+    const { width: mapWidth, height: mapHeight } = mapInfo
+    const pixels = new Uint8Array(1000 * 600 * 4) // 初始化像素数组
+    const widthScale = mapWidth / width
+    const heightScale = mapHeight / height
+    const mapScale = Math.max(widthScale, heightScale) // 计算缩放比例
+
+    // 填充 pixels 数组
+    for (let row = 0; row < height; row++) {
+      for (let col = 0; col < width; col++) {
+        const targetCol = Math.ceil(mapScale * col)
+        const targetRow = Math.ceil(mapScale * row)
+        const mapI = targetCol + (mapHeight - 1 - targetRow) * mapWidth
+        const val = mapData[mapI]
+        const i = (col + row * width) * 4
+
+        // 设置 RGBA 值
+        const color = val === 100 ? 0 : val === 0 ? 236 : 127
+        pixels[i] = color
+        pixels[i + 1] = color
+        pixels[i + 2] = color
+        pixels[i + 3] = 236
+      }
     }
-  }
-  const data = Skia.Data.fromBytes(pixels)
-  const img = Skia.Image.MakeImage(
-    {
-      width: 1000,
-      height: 600,
-      alphaType: AlphaType.Opaque,
-      colorType: ColorType.RGBA_8888,
-    },
-    data,
-    1000 * 4,
-  )
+
+    const data = Skia.Data.fromBytes(pixels)
+    const img = Skia.Image.MakeImage(
+      {
+        width,
+        height,
+        alphaType: AlphaType.Opaque,
+        colorType: ColorType.RGBA_8888,
+      },
+      data,
+      width * 4,
+    )
+
+    setBgImage(img)
+  }, [mapData])
 
   /**
    * 获取地图数据
@@ -58,6 +78,7 @@ export function RobotMap(props: IRobotMapProps) {
             info: drawingMap,
           },
         )
+        console.log(res.map)
         if (res?.map?.info) {
           setMapInfo(res.map.info)
           setMapData(res.map.data)
@@ -69,9 +90,17 @@ export function RobotMap(props: IRobotMapProps) {
         setMapInfo(undefined)
       }
     }
-    return
     fetchData()
   }, [drawingMap])
+
+  /**
+   * 地图点云信息变化时更新地图
+   */
+  useEffect(() => {
+    if (mapData) {
+      renderMapImage()
+    }
+  }, [mapData])
 
   return (
     <View
@@ -81,14 +110,16 @@ export function RobotMap(props: IRobotMapProps) {
       }}
     >
       <Canvas style={{ width, height }}>
-        <Image
-          image={img}
-          fit='contain'
-          x={0}
-          y={0}
-          width={1000}
-          height={600}
-        />
+        {bgImage && (
+          <Image
+            image={bgImage}
+            fit='contain'
+            x={0}
+            y={0}
+            width={1000}
+            height={600}
+          />
+        )}
       </Canvas>
     </View>
   )
