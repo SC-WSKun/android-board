@@ -2,10 +2,14 @@
 
 用 [Expo](https://expo.dev) 搭的机器人安卓控制端
 
+地图相关的操作采用skia引擎，[react-native-skia](https://github.com/shopify/react-native-skia)这个仓库很活跃，[skia](https://skia.org/)本身是google下的2D图形引擎，可靠性也比较高。本来就支持在安卓平台上使用，因此优化上比react-native-canvas好不少。
+
 ## Todo
 - [x] 接入Foxglove Bridge与机器人进行通信
-- [ ] 完成地图绘制（用react-native-canvas写了一个，发现这玩意的imageData不少bug，现在换成react-native-skia进行尝试）
-- [ ] 完成地图交互（标点、导航）
+- [x] 完成地图绘制（用react-native-skia进行开发）
+- [ ] 完成激光点云插件封装
+- [ ] 完成导航交互
+- [ ] 完成标点交互
 
 
 ## Get started
