@@ -1,6 +1,5 @@
-import { useDrawContext } from '@/store/drawContext'
 import { useGlobal } from '@/store/globalContext'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { View } from 'react-native'
 import {
   Canvas,
@@ -9,16 +8,32 @@ import {
   ColorType,
   Image,
 } from '@shopify/react-native-skia'
+import { transformPointCloud } from '@/utils/laserPoint'
+import LaserPointAtlas from './LaserPointAtlas'
+import { TRANSFORM_MAP } from '@/constants/TransformMap'
+import { applyTransform } from '@/utils/coodinate'
+import _ from 'lodash'
+import { useSelector } from 'react-redux'
+import { useDrawContext } from '@/store/drawSlice'
 
 interface IRobotMapProps {
-  fn: any
+  plugins: string[]
 }
 
 export function RobotMap(props: IRobotMapProps) {
+  const { plugins } = props
   const width = 1000 // canvas宽度
   const height = 600 // canvas高度
-  const { callService } = useGlobal()
+  const {
+    subscribeTopic,
+    callService,
+    listenMessage,
+    readMsgWithSubId,
+    getTransform,
+    updateTransform,
+  } = useGlobal()
   const { drawingMap } = useDrawContext()
+  // const { getTransform } = useTransformContext()
   const [mapInfo, setMapInfo] = useState<any>(undefined) // 地图的长宽等信息
   const [mapData, setMapData] = useState<any>(undefined) // 地图的点云信息
   const [bgImage, setBgImage] = useState<any>(undefined)
@@ -67,6 +82,57 @@ export function RobotMap(props: IRobotMapProps) {
   }, [mapData])
 
   /**
+   * 激光点云回调
+   */
+  const laserPointHandler = (
+    op: any,
+    subscriptionId: number,
+    timestamp: number,
+    data: any,
+  ) => {
+    const parseData = readMsgWithSubId(subscriptionId, data)
+    let laserFrame = parseData.header.frame_id
+    let points = transformPointCloud(parseData)
+    let transformedPoints = getPositionWithFrame(laserFrame, points)
+    console.log('point:', transformedPoints)
+  }
+
+  /**
+   * 点云坐标系映射到map(世界坐标)
+   * laser_link -> base_link -> base_foot_print -> odom -> map
+   */
+  const getPositionWithFrame = (
+    frame_id: string,
+    points: { x: number; y: number }[],
+  ) => {
+    if (!frame_id) return null
+    return points.map(position => {
+      let tmp: any = position
+
+      tmp = applyTransform(
+        position,
+        getTransform(_.get(TRANSFORM_MAP, frame_id)),
+      )
+      if (!tmp) return null
+      tmp = applyTransform(tmp, getTransform('baseLinkToBaseFootprint'))
+      tmp = applyTransform(tmp, getTransform('baseFootprintToOdom'))
+      tmp = applyTransform(tmp, getTransform('odomToMap'))
+      return tmp
+    })
+  }
+
+  const tfStaticHandler = (
+    op: any,
+    subscriptionId: number,
+    timestamp: number,
+    data: any,
+  ) => {
+    const parseData = readMsgWithSubId(subscriptionId, data)
+    console.log('tfStatic', parseData)
+    updateTransform(parseData.transforms)
+  }
+
+  /**
    * 获取地图数据
    */
   useEffect(() => {
@@ -78,7 +144,6 @@ export function RobotMap(props: IRobotMapProps) {
             info: drawingMap,
           },
         )
-        console.log(res.map)
         if (res?.map?.info) {
           setMapInfo(res.map.info)
           setMapData(res.map.data)
@@ -102,6 +167,18 @@ export function RobotMap(props: IRobotMapProps) {
     }
   }, [mapData])
 
+  /**
+   * 订阅必须topic
+   */
+  useEffect(() => {
+    subscribeTopic('/tf_static').then((res: any) => {
+      listenMessage('/tf_static', tfStaticHandler)
+    })
+    subscribeTopic('/scan').then((res: any) => {
+      listenMessage('/scan', laserPointHandler)
+    })
+  }, [])
+
   return (
     <View
       style={{
@@ -110,16 +187,15 @@ export function RobotMap(props: IRobotMapProps) {
       }}
     >
       <Canvas style={{ width, height }}>
-        {bgImage && (
-          <Image
-            image={bgImage}
-            fit='contain'
-            x={0}
-            y={0}
-            width={1000}
-            height={600}
-          />
-        )}
+        <Image
+          image={bgImage}
+          fit='contain'
+          x={0}
+          y={0}
+          width={1000}
+          height={600}
+        />
+        <LaserPointAtlas />
       </Canvas>
     </View>
   )

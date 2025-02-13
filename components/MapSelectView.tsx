@@ -1,4 +1,4 @@
-import { useDrawContext } from '@/store/drawContext'
+import { useDrawContext } from '@/store/drawSlice'
 import { useGlobal } from '@/store/globalContext'
 import { useEffect, useState } from 'react'
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'

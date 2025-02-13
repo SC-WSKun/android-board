@@ -1,12 +1,11 @@
+import React from 'react'
 import ImageContainer from '@/components/ui/ImageContainer'
 import { useGlobal } from '@/store/globalContext'
-import { router } from 'expo-router'
-import { useEffect, useMemo } from 'react'
-import { NAVIGATION_MAP } from './_layout'
+import { useMemo } from 'react'
 import { LabelView } from '@/components/LabelView'
 import { MapSelectView } from '@/components/MapSelectView'
 import { RobotMap } from '@/components/RobotMap'
-import { DrawContextProvider, useDrawContext } from '@/store/drawContext'
+import { useDrawContext } from '@/store/drawSlice'
 
 function NavigationScreen() {
   const { foxgloveClientConnected } = useGlobal()
@@ -19,13 +18,7 @@ function NavigationScreen() {
       case 'select-map':
         return <MapSelectView />
       case 'navigation':
-        return (
-          <RobotMap
-            fn={() => {
-              console.log('navigation map fn')
-            }}
-          />
-        )
+        return <RobotMap plugins={['laser-point']} />
       default:
         return <></>
     }
@@ -41,12 +34,4 @@ function NavigationScreen() {
   return <ImageContainer>{renderView}</ImageContainer>
 }
 
-const NavigationScreenContainer = () => {
-  return (
-    <DrawContextProvider>
-      <NavigationScreen />
-    </DrawContextProvider>
-  )
-}
-
-export default NavigationScreenContainer
+export default NavigationScreen
