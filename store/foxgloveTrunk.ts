@@ -39,15 +39,15 @@ export const initClient =
       })
 
       clientInstance.on('advertise', (rx_channels: Channel[]) => {
-        const channels = getState().foxglove.channels
-        rx_channels.forEach((channel: Channel) => {
+        const channels = { ...getState().foxglove.channels }
+        for (const channel of rx_channels) {
           channels[channel.id] = channel
-        })
+        }
         dispatch(setChannels(channels))
       })
 
       clientInstance.on('unadvertise', (channelIds: number[]) => {
-        const channels = getState().foxglove.channels
+        const channels = { ...getState().foxglove.channels }
         channelIds.forEach((id: number) => {
           delete channels[id]
         })

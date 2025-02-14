@@ -39,7 +39,6 @@ export function MapSelectView() {
   useEffect(() => {
     dispatch(callService('/tiered_nav_conn_graph/list_maps', {}))
       .then((res: any) => {
-        console.log(res.maps.length)
         setMapList(res.maps)
       })
       .catch(err => {

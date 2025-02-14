@@ -53,7 +53,10 @@ export function RobotMap(props: IRobotMapProps) {
     }[],
   ) => {
     transforms?.forEach(transform => {
-      console.log(transform.child_frame_id)
+      updateTransform(
+        TRANSFORM_MAP[transform.child_frame_id],
+        transform.transform,
+      )
     })
   }
 
@@ -103,13 +106,15 @@ export function RobotMap(props: IRobotMapProps) {
   /**
    * 激光点云回调
    */
-  const laserPointHandler = (
+  const laserPointHandler = async (
     op: any,
     subscriptionId: number,
     timestamp: number,
     data: any,
   ) => {
-    const parseData: any = dispatch(readMsgWithSubId(subscriptionId, data))
+    const parseData: any = await dispatch(
+      readMsgWithSubId(subscriptionId, data),
+    )
     let laserFrame = parseData.header.frame_id
     let points = transformPointCloud(parseData)
     let transformedPoints = getPositionWithFrame(laserFrame, points)
@@ -136,13 +141,15 @@ export function RobotMap(props: IRobotMapProps) {
     })
   }
 
-  const tfStaticHandler = (
+  const tfStaticHandler = async (
     op: any,
     subscriptionId: number,
     timestamp: number,
     data: any,
   ) => {
-    const parseData: any = readMsgWithSubId(subscriptionId, data)
+    const parseData: any = await dispatch(
+      readMsgWithSubId(subscriptionId, data),
+    )
     updateTransforms(parseData.transforms)
   }
 
@@ -184,12 +191,20 @@ export function RobotMap(props: IRobotMapProps) {
    * 订阅必须topic
    */
   useEffect(() => {
-    dispatch(subscribeTopic('/tf_static')).then((res: any) => {
-      listenMessage('/tf_static', tfStaticHandler)
-    })
-    dispatch(subscribeTopic('/scan')).then((res: any) => {
-      listenMessage('/scan', laserPointHandler)
-    })
+    dispatch(subscribeTopic('/tf_static'))
+      .then((res: any) => {
+        dispatch(listenMessage('/tf_static', tfStaticHandler))
+      })
+      .catch((err: any) => {
+        console.error(err)
+      })
+    dispatch(subscribeTopic('/scan'))
+      .then((res: any) => {
+        dispatch(listenMessage('/scan', laserPointHandler))
+      })
+      .catch((err: any) => {
+        console.error(err)
+      })
   }, [])
 
   return (
