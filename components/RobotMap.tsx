@@ -1,4 +1,3 @@
-import { useGlobal } from '@/store/globalContext'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { View } from 'react-native'
 import {
@@ -13,8 +12,16 @@ import LaserPointAtlas from './LaserPointAtlas'
 import { TRANSFORM_MAP } from '@/constants/TransformMap'
 import { applyTransform } from '@/utils/coodinate'
 import _ from 'lodash'
-import { useSelector } from 'react-redux'
 import { useDrawContext } from '@/store/drawSlice'
+import { useDispatch } from 'react-redux'
+import { AppDispatch } from '@/store/store'
+import {
+  callService,
+  listenMessage,
+  readMsgWithSubId,
+  subscribeTopic,
+} from '@/store/foxgloveTrunk'
+import { useTransformContext } from '@/store/transformSlice'
 
 interface IRobotMapProps {
   plugins: string[]
@@ -24,19 +31,31 @@ export function RobotMap(props: IRobotMapProps) {
   const { plugins } = props
   const width = 1000 // canvas宽度
   const height = 600 // canvas高度
-  const {
-    subscribeTopic,
-    callService,
-    listenMessage,
-    readMsgWithSubId,
-    getTransform,
-    updateTransform,
-  } = useGlobal()
+  const dispatch = useDispatch<AppDispatch>()
   const { drawingMap } = useDrawContext()
+  const {
+    odomToMap,
+    baseFootprintToOdom,
+    baseLinkToBaseFootprint,
+    laserLinkToBaseLink,
+    updateTransform,
+  } = useTransformContext()
   // const { getTransform } = useTransformContext()
   const [mapInfo, setMapInfo] = useState<any>(undefined) // 地图的长宽等信息
   const [mapData, setMapData] = useState<any>(undefined) // 地图的点云信息
   const [bgImage, setBgImage] = useState<any>(undefined)
+
+  const updateTransforms = (
+    transforms: {
+      transform: Transform
+      child_frame_id: string
+      [key: string]: any
+    }[],
+  ) => {
+    transforms?.forEach(transform => {
+      console.log(transform.child_frame_id)
+    })
+  }
 
   /**
    * 渲染地图，赋值给image
@@ -90,11 +109,10 @@ export function RobotMap(props: IRobotMapProps) {
     timestamp: number,
     data: any,
   ) => {
-    const parseData = readMsgWithSubId(subscriptionId, data)
+    const parseData: any = dispatch(readMsgWithSubId(subscriptionId, data))
     let laserFrame = parseData.header.frame_id
     let points = transformPointCloud(parseData)
     let transformedPoints = getPositionWithFrame(laserFrame, points)
-    console.log('point:', transformedPoints)
   }
 
   /**
@@ -109,14 +127,11 @@ export function RobotMap(props: IRobotMapProps) {
     return points.map(position => {
       let tmp: any = position
 
-      tmp = applyTransform(
-        position,
-        getTransform(_.get(TRANSFORM_MAP, frame_id)),
-      )
+      tmp = applyTransform(position, laserLinkToBaseLink)
       if (!tmp) return null
-      tmp = applyTransform(tmp, getTransform('baseLinkToBaseFootprint'))
-      tmp = applyTransform(tmp, getTransform('baseFootprintToOdom'))
-      tmp = applyTransform(tmp, getTransform('odomToMap'))
+      tmp = applyTransform(tmp, baseLinkToBaseFootprint)
+      tmp = applyTransform(tmp, baseFootprintToOdom)
+      tmp = applyTransform(tmp, odomToMap)
       return tmp
     })
   }
@@ -127,9 +142,8 @@ export function RobotMap(props: IRobotMapProps) {
     timestamp: number,
     data: any,
   ) => {
-    const parseData = readMsgWithSubId(subscriptionId, data)
-    console.log('tfStatic', parseData)
-    updateTransform(parseData.transforms)
+    const parseData: any = readMsgWithSubId(subscriptionId, data)
+    updateTransforms(parseData.transforms)
   }
 
   /**
@@ -138,11 +152,10 @@ export function RobotMap(props: IRobotMapProps) {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await callService(
-          '/tiered_nav_state_machine/get_grid_map',
-          {
+        const res: any = await dispatch(
+          callService('/tiered_nav_state_machine/get_grid_map', {
             info: drawingMap,
-          },
+          }),
         )
         if (res?.map?.info) {
           setMapInfo(res.map.info)
@@ -171,10 +184,10 @@ export function RobotMap(props: IRobotMapProps) {
    * 订阅必须topic
    */
   useEffect(() => {
-    subscribeTopic('/tf_static').then((res: any) => {
+    dispatch(subscribeTopic('/tf_static')).then((res: any) => {
       listenMessage('/tf_static', tfStaticHandler)
     })
-    subscribeTopic('/scan').then((res: any) => {
+    dispatch(subscribeTopic('/scan')).then((res: any) => {
       listenMessage('/scan', laserPointHandler)
     })
   }, [])

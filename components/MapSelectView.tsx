@@ -1,12 +1,14 @@
 import { useDrawContext } from '@/store/drawSlice'
-import { useGlobal } from '@/store/globalContext'
+import { callService } from '@/store/foxgloveTrunk'
+import { AppDispatch } from '@/store/store'
 import { useEffect, useState } from 'react'
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
 import Icon from 'react-native-vector-icons/FontAwesome'
+import { useDispatch } from 'react-redux'
 
 export function MapSelectView() {
+  const dispatch = useDispatch<AppDispatch>()
   const [mapList, setMapList] = useState([])
-  const { callService } = useGlobal()
   const { changeMap, setCurrentView } = useDrawContext()
 
   const handleSelectMap = (map: RobotMap) => {
@@ -35,8 +37,8 @@ export function MapSelectView() {
 
   // 获取地图列表
   useEffect(() => {
-    callService('/tiered_nav_conn_graph/list_maps', {})
-      .then(res => {
+    dispatch(callService('/tiered_nav_conn_graph/list_maps', {}))
+      .then((res: any) => {
         console.log(res.maps.length)
         setMapList(res.maps)
       })

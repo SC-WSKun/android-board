@@ -1,6 +1,6 @@
 import ImageContainer from '@/components/ui/ImageContainer'
-import { useGlobal } from '@/store/globalContext'
-import { FoxgloveClient } from '@foxglove/ws-protocol'
+import { initClient } from '@/store/foxgloveTrunk'
+import { AppDispatch } from '@/store/store'
 import { useState } from 'react'
 import {
   StyleSheet,
@@ -11,11 +11,12 @@ import {
   Button,
   Pressable,
 } from 'react-native'
+import { useDispatch } from 'react-redux'
 
 export default function SettingScreen() {
-  const [ipAddress, setIpAddress] = useState<string>('192.168.1.211') // 存储 IP 地址
+  const dispatch = useDispatch<AppDispatch>()
+  const [ipAddress, setIpAddress] = useState<string>('10.0.1.111') // 存储 IP 地址
   const [isValid, setIsValid] = useState<boolean>(true) // 存储 IP 地址的有效性状态
-  const global = useGlobal()
 
   // 校验 IP 地址的简单函数
   const validateIP = (ip: string) => {
@@ -31,8 +32,7 @@ export default function SettingScreen() {
       Alert.alert('错误', '请输入有效的 IP 地址！')
       return
     }
-    global
-      .initClient(ipAddress)
+    dispatch(initClient(ipAddress))
       .then(() => {
         Alert.alert('成功', `IP 地址 ${ipAddress} 配置成功！`)
       })

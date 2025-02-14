@@ -1,5 +1,7 @@
-import { useGlobal } from '@/store/globalContext'
+import { callService } from '@/store/foxgloveTrunk'
+import { AppDispatch } from '@/store/store'
 import { useState } from 'react'
+import { useDispatch } from 'react-redux'
 import { TextEncoder } from 'text-encoding'
 
 export type PositionLabel = {
@@ -20,11 +22,11 @@ export type PositionLabel = {
 }
 
 export function useLabels() {
+  const dispatch = useDispatch<AppDispatch>()
   const [goalSeq, setGoalSeq] = useState(0)
-  const global = useGlobal()
   const encoder = new TextEncoder()
   const getLabels = async () => {
-    return global.callService('/nav2_extended/get_labels')
+    return dispatch(callService('/nav2_extended/get_labels'))
   }
 
   const navigateToLabel = async (label: PositionLabel) => {
@@ -42,7 +44,7 @@ export function useLabels() {
       label_name: encode_label_name,
     }
     setGoalSeq(newGoalSeq)
-    return global.callService('/nav2_extended/label_goal_pose', labelNavData)
+    return dispatch(callService('/nav2_extended/label_goal_pose', labelNavData))
   }
   return {
     getLabels,

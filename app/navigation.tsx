@@ -1,6 +1,5 @@
 import React from 'react'
 import ImageContainer from '@/components/ui/ImageContainer'
-import { useGlobal } from '@/store/globalContext'
 import { useMemo } from 'react'
 import { LabelView } from '@/components/LabelView'
 import { MapSelectView } from '@/components/MapSelectView'
@@ -8,7 +7,6 @@ import { RobotMap } from '@/components/RobotMap'
 import { useDrawContext } from '@/store/drawSlice'
 
 function NavigationScreen() {
-  const { foxgloveClientConnected } = useGlobal()
   const { currentView } = useDrawContext()
 
   const renderView = useMemo(() => {

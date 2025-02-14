@@ -5,11 +5,13 @@ import {
   type ClientChannelWithoutId,
   type Service,
   type ServerInfo,
+  MessageData,
 } from '@foxglove/ws-protocol'
 import { MessageWriter, MessageReader } from '@foxglove/rosmsg2-serialization'
 import { parse as parseMessageDefinition } from '@foxglove/rosmsg'
 
 type Sub = {
+  topic: string
   subId: number
   channelId: number
 }
@@ -18,7 +20,7 @@ export function useFoxgloveClient() {
   let client: FoxgloveClient | null = null
   let channels: Map<number, Channel> = new Map()
   let services: Service[] = []
-  let subs: Sub[] = []
+  let subs: Record<string, Sub> = {}
   let advertisedChannels: any[] = []
   let msgEncoding = 'cdr'
   let callServiceId = 0
@@ -81,7 +83,7 @@ export function useFoxgloveClient() {
         client?.unadvertise(channel.id)
       })
       // unsubscribe all the channel from server
-      subs.forEach((sub: Sub) => {
+      Object.values(subs).forEach((sub: Sub) => {
         client?.unsubscribe(sub.subId)
       })
       client.close()
@@ -105,23 +107,23 @@ export function useFoxgloveClient() {
       return Promise.reject('Channel not found')
     }
     const subId = client.subscribe(channel.id)
-    subs.push({ subId, channelId: channel.id })
+    subs[topic] = { topic, subId, channelId: channel.id }
     return Promise.resolve(subId)
   }
 
   /**
    * unsubscribe topic
-   * @param subId id of the subscription
+   * @param topic name of the subscription
    * @returns
    */
-  function unSubscribeTopic(subId: number) {
+  function unSubscribeTopic(topic: string) {
     if (!client) {
       console.error('Client not initialized!')
       return
     }
+    client.unsubscribe(subs[topic].subId)
     // remove from subs list
-    subs = _.reject(subs, { subId })
-    client.unsubscribe(subId)
+    delete subs[topic]
   }
 
   /**
@@ -235,16 +237,29 @@ export function useFoxgloveClient() {
 
   /**
    * receive the message from subscribeb channel
-   * @param subId id of the subscription
+   * @param topic name of subcribed channel
    * @param callback
    * @returns
    */
-  function listenMessage(callback: (...args: any) => void) {
+  function listenMessage(topic: string, callback: (...args: any) => void) {
     if (!client) {
       console.error('Client not initialized!')
       return
     }
-    client.on('message', callback)
+    const msgHandler = ({
+      op,
+      subscriptionId,
+      timestamp,
+      data,
+    }: MessageData) => {
+      if (!subs[topic]) {
+        return
+      }
+      if (subscriptionId === subs[topic].subId) {
+        callback(op, subscriptionId, timestamp, data)
+      }
+    }
+    client.on('message', msgHandler)
   }
 
   function stopListenMessage(callback: (...args: any) => void) {

@@ -12,7 +12,6 @@ import { Provider } from 'react-redux'
 import store from '@/store/store'
 
 import { useColorScheme } from '@/hooks/useColorScheme'
-import { GlobalProvider } from '@/store/globalContext'
 
 const ROUTER_MAP = {
   HOME: 'index' as const,
@@ -59,23 +58,21 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <Provider store={store}>
-        <GlobalProvider>
-          <Stack>
-            <Stack.Screen
-              name={ROUTER_MAP.HOME}
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen
-              name={ROUTER_MAP.NAVIGATION}
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen
-              name={ROUTER_MAP.SETTING}
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen name={ROUTER_MAP.NOT_FOUND} />
-          </Stack>
-        </GlobalProvider>
+        <Stack>
+          <Stack.Screen
+            name={ROUTER_MAP.HOME}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name={ROUTER_MAP.NAVIGATION}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name={ROUTER_MAP.SETTING}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen name={ROUTER_MAP.NOT_FOUND} />
+        </Stack>
       </Provider>
     </ThemeProvider>
   )

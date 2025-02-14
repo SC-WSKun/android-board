@@ -50,3 +50,28 @@ type MapInfo = {
     sec: number
   }
 }
+
+/**
+ * 激光点云
+ */
+type LaserPoint = {
+  angle_min: number
+  range_min: number
+  range_max: number
+  ranges: number[]
+  angle_increment: number
+}
+
+type Transform = {
+  rotation: {
+    x: number
+    y: number
+    z: number
+    w: number
+  }
+  translation: {
+    x: number
+    y: number
+    z: number
+  }
+}

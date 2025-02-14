@@ -28,3 +28,22 @@ export const worldCoordinateToPixel = (
     y: (worldY - originY) / (scale * resolution),
   }
 }
+
+// 点云应用坐标系转换
+export const applyTransform = (
+  points: { x: number; y: number },
+  transform: Transform | null,
+) => {
+  if (!transform || !points) return null
+  const { rotation, translation } = transform
+  const yaw = Math.atan2(
+    2.0 * (rotation.w * rotation.z + rotation.x * rotation.y),
+    1.0 - 2.0 * (rotation.y * rotation.y + rotation.z * rotation.z),
+  )
+  const rotatedX = Math.cos(yaw) * points.x - Math.sin(yaw) * points.y
+  const rotatedY = Math.sin(yaw) * points.x + Math.cos(yaw) * points.y
+  return {
+    x: rotatedX + translation.x,
+    y: rotatedY + translation.y,
+  }
+}
