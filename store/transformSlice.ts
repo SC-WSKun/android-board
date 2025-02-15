@@ -32,7 +32,7 @@ const transformSlice = createSlice({
     updateTransform(
       state,
       action: PayloadAction<{
-        transformType: keyof TransformState
+        transformType: string
         value: Transform
       }>,
     ) {
@@ -66,7 +66,7 @@ export function useTransformContext() {
     baseLinkToBaseFootprint,
     baseScanToBaseLink,
     laserLinkToBaseLink,
-    updateTransform: (transformType: keyof TransformState, value: Transform) =>
+    updateTransform: (transformType: string, value: Transform) =>
       dispatch(updateTransform({ transformType, value })),
   }
 }

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { View } from 'react-native'
+import { Button, View } from 'react-native'
 import {
   Canvas,
   Skia,
@@ -9,12 +9,11 @@ import {
 } from '@shopify/react-native-skia'
 import { transformPointCloud } from '@/utils/laserPoint'
 import LaserPointAtlas from './LaserPointAtlas'
-import { TRANSFORM_MAP } from '@/constants/TransformMap'
 import { applyTransform } from '@/utils/coodinate'
 import _ from 'lodash'
 import { useDrawContext } from '@/store/drawSlice'
 import { useDispatch } from 'react-redux'
-import { AppDispatch } from '@/store/store'
+import store, { AppDispatch } from '@/store/store'
 import {
   callService,
   listenMessage,
@@ -33,13 +32,7 @@ export function RobotMap(props: IRobotMapProps) {
   const height = 600 // canvas高度
   const dispatch = useDispatch<AppDispatch>()
   const { drawingMap } = useDrawContext()
-  const {
-    odomToMap,
-    baseFootprintToOdom,
-    baseLinkToBaseFootprint,
-    laserLinkToBaseLink,
-    updateTransform,
-  } = useTransformContext()
+  const { updateTransform } = useTransformContext()
   // const { getTransform } = useTransformContext()
   const [mapInfo, setMapInfo] = useState<any>(undefined) // 地图的长宽等信息
   const [mapData, setMapData] = useState<any>(undefined) // 地图的点云信息
@@ -53,10 +46,7 @@ export function RobotMap(props: IRobotMapProps) {
     }[],
   ) => {
     transforms?.forEach(transform => {
-      updateTransform(
-        TRANSFORM_MAP[transform.child_frame_id],
-        transform.transform,
-      )
+      updateTransform(transform.child_frame_id, transform.transform)
     })
   }
 
@@ -130,10 +120,14 @@ export function RobotMap(props: IRobotMapProps) {
   ) => {
     if (!frame_id) return null
     return points.map(position => {
+      // 这里在ws的回调中调用的，非react组件不能直接获得react的状态，所以要用store.getState
+      const state = store.getState()
+      const laserLinkToBaseLink = state.transform.laserLinkToBaseLink
+      const baseLinkToBaseFootprint = state.transform.baseLinkToBaseFootprint
+      const baseFootprintToOdom = state.transform.baseFootprintToOdom
+      const odomToMap = state.transform.odomToMap
       let tmp: any = position
-
       tmp = applyTransform(position, laserLinkToBaseLink)
-      if (!tmp) return null
       tmp = applyTransform(tmp, baseLinkToBaseFootprint)
       tmp = applyTransform(tmp, baseFootprintToOdom)
       tmp = applyTransform(tmp, odomToMap)
@@ -141,6 +135,24 @@ export function RobotMap(props: IRobotMapProps) {
     })
   }
 
+  /**
+   * 处理tf的信息
+   */
+  const tfHandler = async (
+    op: any,
+    subscriptionId: number,
+    timestamp: number,
+    data: any,
+  ) => {
+    const parseData: any = await dispatch(
+      readMsgWithSubId(subscriptionId, data),
+    )
+    updateTransforms(parseData.transforms)
+  }
+
+  /**
+   * 处理tf_static的信息
+   */
   const tfStaticHandler = async (
     op: any,
     subscriptionId: number,
@@ -189,22 +201,36 @@ export function RobotMap(props: IRobotMapProps) {
 
   /**
    * 订阅必须topic
+   * tf: 更新baseFootprintToOdom,leftWheelToBaseLink,rightWheelToBaseLink
+   * tf_static: 更新laserLinkToBaseLink, baseLinkToBaseFootprint
    */
   useEffect(() => {
+    dispatch(subscribeTopic('/tf'))
+      .then((res: any) => {
+        dispatch(listenMessage('/tf', tfHandler))
+      })
+      .catch((err: any) => {
+        console.error('[RobotMap] subscribe topic tf error:', err)
+      })
     dispatch(subscribeTopic('/tf_static'))
       .then((res: any) => {
         dispatch(listenMessage('/tf_static', tfStaticHandler))
       })
       .catch((err: any) => {
-        console.error(err)
+        console.error('[RobotMap] subscribe topic tf_static error:', err)
       })
     dispatch(subscribeTopic('/scan'))
       .then((res: any) => {
         dispatch(listenMessage('/scan', laserPointHandler))
       })
       .catch((err: any) => {
-        console.error(err)
+        console.error('[RobotMap] subscribe topic scan error:', err)
       })
+    dispatch(
+      callService('/tiered_nav_state_machine/switch_mode', {
+        mode: 2,
+      }),
+    )
   }, [])
 
   return (
