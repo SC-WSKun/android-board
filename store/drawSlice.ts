@@ -43,14 +43,14 @@ const drawSlice = createSlice({
         height: number
         mapWidth: number
         mapHeight: number
-        mapData: any
+        mapData: any // 这里mapData要用base64，因为直接传二进制数据redux会因为不能序列化数据而报错
       }>,
     ) {
       const width = action.payload.width
       const height = action.payload.height
       const mapWidth = action.payload.mapWidth
       const mapHeight = action.payload.mapHeight
-      const binaryString = atob(action.payload.mapData) // 解码 Base64
+      const binaryString = atob(action.payload.mapData) // base64 -> 二进制
       const mapData = new Uint8Array(binaryString.length)
       for (let i = 0; i < binaryString.length; i++) {
         mapData[i] = binaryString.charCodeAt(i)
