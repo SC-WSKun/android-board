@@ -8,7 +8,7 @@ import {
 } from '@foxglove/ws-protocol'
 import { MessageWriter, MessageReader } from '@foxglove/rosmsg2-serialization'
 import { parse as parseMessageDefinition } from '@foxglove/rosmsg'
-import _ from 'lodash'
+import _, { reject } from 'lodash'
 import {
   setClient,
   setChannels,
@@ -210,13 +210,19 @@ export const callService =
             ros2: true,
           },
         )
-        const reader = new MessageReader(parseResDefinitions)
-        // console.log('res.data', response.data);
-        // console.log('reader', reader);
+        try {
+          const reader = new MessageReader(parseResDefinitions)
+          // console.log('res.data', response.data);
+          // console.log('reader', reader);
 
-        const res = reader.readMessage(response.data)
-        resolve(res)
-        client?.off('serviceCallResponse', serviceResponseHandler)
+          const res = reader.readMessage(response.data)
+          resolve(res)
+        } catch (err: any) {
+          // TODO: 这里会出现RangeError: DataView.prototype.get<Type>(): Cannot read that many bytes导致崩溃
+          reject(err)
+        } finally {
+          client?.off('serviceCallResponse', serviceResponseHandler)
+        }
       }
       client!.on('serviceCallResponse', serviceResponseHandler)
     })

@@ -1,4 +1,4 @@
-import { GlobalProvider, useGlobal } from '@/store/globalContext'
+import store from '@/store/store'
 import {
   Skia,
   drawAsImage,
@@ -31,9 +31,12 @@ const image = drawAsImage(
   imageSize,
 )
 
-export default function LaserPointAtlas() {
-  const numberOfBoxes = 150
-  const pos = { x: 128, y: 128 }
+export default function LaserPointAtlas({
+  numberOfBoxes,
+}: {
+  numberOfBoxes: number
+}) {
+  const pos = { x: 256, y: 256 }
   const width = 256
   const sprites = new Array(numberOfBoxes)
     .fill(0)
@@ -46,6 +49,16 @@ export default function LaserPointAtlas() {
       return Skia.RSXform(Math.cos(r), Math.sin(r), tx, ty)
     }),
   )
+
+  useEffect(() => {
+    const newTransform = new Array(numberOfBoxes).fill(0).map((_, i) => {
+      const tx = 5 + ((i * size.width) % width)
+      const ty = 25 + Math.floor(i / (width / size.width)) * size.width
+      const r = Math.atan2(pos.y - ty, pos.x - tx)
+      return Skia.RSXform(Math.cos(r), Math.sin(r), tx, ty)
+    })
+    updateTransforms(newTransform)
+  }, [numberOfBoxes])
 
   return <Atlas image={image} sprites={sprites} transforms={transforms} />
 }

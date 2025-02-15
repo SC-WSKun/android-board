@@ -1,16 +1,9 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Button, View } from 'react-native'
-import {
-  Canvas,
-  Skia,
-  AlphaType,
-  ColorType,
-  Image,
-} from '@shopify/react-native-skia'
+import { useEffect, useState } from 'react'
+import { View } from 'react-native'
+import { Canvas, Image } from '@shopify/react-native-skia'
 import { transformPointCloud } from '@/utils/laserPoint'
 import LaserPointAtlas from './LaserPointAtlas'
 import { applyTransform } from '@/utils/coodinate'
-import _ from 'lodash'
 import { useDrawContext } from '@/store/drawSlice'
 import { useDispatch } from 'react-redux'
 import store, { AppDispatch } from '@/store/store'
@@ -19,6 +12,7 @@ import {
   listenMessage,
   readMsgWithSubId,
   subscribeTopic,
+  unSubscribeTopic,
 } from '@/store/foxgloveTrunk'
 import { useTransformContext } from '@/store/transformSlice'
 
@@ -31,12 +25,13 @@ export function RobotMap(props: IRobotMapProps) {
   const width = 1000 // canvas宽度
   const height = 600 // canvas高度
   const dispatch = useDispatch<AppDispatch>()
-  const { drawingMap } = useDrawContext()
+  const { drawingMap, mapImage, updateLaserPoints, updateMapImage } =
+    useDrawContext()
   const { updateTransform } = useTransformContext()
   // const { getTransform } = useTransformContext()
   const [mapInfo, setMapInfo] = useState<any>(undefined) // 地图的长宽等信息
   const [mapData, setMapData] = useState<any>(undefined) // 地图的点云信息
-  const [bgImage, setBgImage] = useState<any>(undefined)
+  const [numberOfBoxes, setNumberOfBoxes] = useState<number>(150)
 
   const updateTransforms = (
     transforms: {
@@ -53,45 +48,10 @@ export function RobotMap(props: IRobotMapProps) {
   /**
    * 渲染地图，赋值给image
    */
-  const renderMapImage = useCallback(() => {
-    const { width: mapWidth, height: mapHeight } = mapInfo
-    const pixels = new Uint8Array(1000 * 600 * 4) // 初始化像素数组
-    const widthScale = mapWidth / width
-    const heightScale = mapHeight / height
-    const mapScale = Math.max(widthScale, heightScale) // 计算缩放比例
-
-    // 填充 pixels 数组
-    for (let row = 0; row < height; row++) {
-      for (let col = 0; col < width; col++) {
-        const targetCol = Math.ceil(mapScale * col)
-        const targetRow = Math.ceil(mapScale * row)
-        const mapI = targetCol + (mapHeight - 1 - targetRow) * mapWidth
-        const val = mapData[mapI]
-        const i = (col + row * width) * 4
-
-        // 设置 RGBA 值
-        const color = val === 100 ? 0 : val === 0 ? 236 : 127
-        pixels[i] = color
-        pixels[i + 1] = color
-        pixels[i + 2] = color
-        pixels[i + 3] = 236
-      }
-    }
-
-    const data = Skia.Data.fromBytes(pixels)
-    const img = Skia.Image.MakeImage(
-      {
-        width,
-        height,
-        alphaType: AlphaType.Opaque,
-        colorType: ColorType.RGBA_8888,
-      },
-      data,
-      width * 4,
-    )
-
-    setBgImage(img)
-  }, [mapData])
+  const renderMapImage = () => {
+    const base64String = btoa(String.fromCharCode(...mapData))
+    updateMapImage(width, height, mapInfo.width, mapInfo.height, base64String)
+  }
 
   /**
    * 激光点云回调
@@ -108,6 +68,9 @@ export function RobotMap(props: IRobotMapProps) {
     let laserFrame = parseData.header.frame_id
     let points = transformPointCloud(parseData)
     let transformedPoints = getPositionWithFrame(laserFrame, points)
+    if (transformedPoints) {
+      updateLaserPoints(transformedPoints)
+    }
   }
 
   /**
@@ -117,7 +80,7 @@ export function RobotMap(props: IRobotMapProps) {
   const getPositionWithFrame = (
     frame_id: string,
     points: { x: number; y: number }[],
-  ) => {
+  ): { x: number; y: number }[] | null => {
     if (!frame_id) return null
     return points.map(position => {
       // 这里在ws的回调中调用的，非react组件不能直接获得react的状态，所以要用store.getState
@@ -201,7 +164,7 @@ export function RobotMap(props: IRobotMapProps) {
 
   /**
    * 订阅必须topic
-   * tf: 更新baseFootprintToOdom,leftWheelToBaseLink,rightWheelToBaseLink
+   * tf: 更新baseFootprintToOdom,leftWheelToBaseLink,rightWheelToBaseLink,odomToMap(导航模式下)
    * tf_static: 更新laserLinkToBaseLink, baseLinkToBaseFootprint
    */
   useEffect(() => {
@@ -231,6 +194,26 @@ export function RobotMap(props: IRobotMapProps) {
         mode: 2,
       }),
     )
+    return () => {
+      dispatch(unSubscribeTopic('/tf'))
+      dispatch(unSubscribeTopic('/tf_static'))
+      dispatch(unSubscribeTopic('/scan'))
+    }
+  }, [])
+
+  useEffect(() => {
+    function updateNumberOfBox() {
+      setTimeout(() => {
+        const state = store.getState()
+        const mapHasInit = state.draw.mapHasInit
+        if (mapHasInit) {
+          const laserPoints = state.draw.laserPoints
+          setNumberOfBoxes(laserPoints.length)
+        }
+        updateNumberOfBox()
+      }, 1000)
+    }
+    updateNumberOfBox()
   }, [])
 
   return (
@@ -242,14 +225,14 @@ export function RobotMap(props: IRobotMapProps) {
     >
       <Canvas style={{ width, height }}>
         <Image
-          image={bgImage}
+          image={mapImage}
           fit='contain'
           x={0}
           y={0}
           width={1000}
           height={600}
         />
-        <LaserPointAtlas />
+        <LaserPointAtlas numberOfBoxes={numberOfBoxes} />
       </Canvas>
     </View>
   )
