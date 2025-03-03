@@ -9,7 +9,7 @@ import {
 } from '@shopify/react-native-skia'
 import { useEffect, useState } from 'react'
 
-const size = { width: 25, height: 11.25 }
+const size = { width: 5, height: 5 }
 const strokeWidth = 2
 const imageSize = {
   width: size.width + strokeWidth,
@@ -31,34 +31,37 @@ const image = drawAsImage(
   imageSize,
 )
 
+/**
+ * 激光点采用Skia引擎中的Atlas进行绘制，Atlas是一种适用于大量相同图像的绘制优化技术。
+ * 这里将激光点的map坐标转换成每个sprite的Transform，然后进行绘制。
+ * 因此需要保证sprite的原点在map的origin点，否则绘制结果会偏移。
+ */
 export default function LaserPointAtlas({
-  numberOfBoxes,
+  laserPoints = [],
 }: {
-  numberOfBoxes: number
+  laserPoints: any[]
 }) {
-  const pos = { x: 256, y: 256 }
-  const width = 256
-  const sprites = new Array(numberOfBoxes)
+  const { mapInfo, scale } = store.getState().draw
+  const sprites = new Array(laserPoints.length)
     .fill(0)
     .map(() => rect(0, 0, imageSize.width, imageSize.height))
-  const [transforms, updateTransforms] = useState(
-    new Array(numberOfBoxes).fill(0).map((_, i) => {
-      const tx = 5 + ((i * size.width) % width)
-      const ty = 25 + Math.floor(i / (width / size.width)) * size.width
-      const r = Math.atan2(pos.y - ty, pos.x - tx)
-      return Skia.RSXform(Math.cos(r), Math.sin(r), tx, ty)
-    }),
-  )
+  const [transforms, updateTransforms] = useState<any[]>([])
 
   useEffect(() => {
-    const newTransform = new Array(numberOfBoxes).fill(0).map((_, i) => {
-      const tx = 5 + ((i * size.width) % width)
-      const ty = 25 + Math.floor(i / (width / size.width)) * size.width
-      const r = Math.atan2(pos.y - ty, pos.x - tx)
-      return Skia.RSXform(Math.cos(r), Math.sin(r), tx, ty)
+    if (laserPoints.length === 0) {
+      return
+    }
+    const { x: originX, y: originY } = mapInfo.origin.position
+    const { resolution } = mapInfo
+    const scaleInv = 1 / scale
+
+    const newTransforms = laserPoints.map((point, i) => {
+      const tx = ((point.x - originX) * scaleInv) / resolution
+      const ty = ((point.y - originY) * scaleInv) / resolution
+      return Skia.RSXform(1, 0, tx, ty)
     })
-    updateTransforms(newTransform)
-  }, [numberOfBoxes])
+    updateTransforms(prev => newTransforms)
+  }, [laserPoints, mapInfo])
 
   return <Atlas image={image} sprites={sprites} transforms={transforms} />
 }

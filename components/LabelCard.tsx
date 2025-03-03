@@ -1,18 +1,20 @@
-import { useGlobal } from '@/store/globalContext'
+import { callService } from '@/store/foxgloveTrunk'
+import { AppDispatch } from '@/store/store'
 import { useEffect } from 'react'
 import { Image, Pressable, StyleSheet } from 'react-native'
 import { View } from 'react-native-reanimated/lib/typescript/Animated'
+import { useDispatch } from 'react-redux'
 interface Props {
   imgUrl?: string
   labelName: string
   clickHandler: () => void
 }
 export function LabelCard(props: Props) {
-  const { imgUrl, labelName, clickHandler } = props
-  const global = useGlobal()
+  const dispatch = useDispatch<AppDispatch>()
+  const { imgUrl, clickHandler } = props
 
   useEffect(() => {
-    global.callService('/label_manager/get_labels', {}).then(res => {
+    dispatch(callService('/label_manager/get_labels', {})).then(res => {
       console.log(res)
     })
   })

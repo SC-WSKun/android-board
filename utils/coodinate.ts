@@ -14,8 +14,8 @@ export const pixelToWorldCoordinate = (
   }
 }
 
-// 真实世界坐标转像素坐标
-export const worldCoordinateToPixel = (
+// map坐标转Canvas坐标
+export const mapToCanvas = (
   worldX: number,
   worldY: number,
   scale: number,
@@ -45,5 +45,57 @@ export const applyTransform = (
   return {
     x: rotatedX + translation.x,
     y: rotatedY + translation.y,
+  }
+}
+
+// 小车在map的位置
+// map -> odom -> base_footprint
+export const mapToBaseFootprint = (
+  odomToMap: Transform | null,
+  baseFootprintToOdom: Transform | null,
+) => {
+  if (!odomToMap || !baseFootprintToOdom) {
+    return null
+  }
+  // 计算map到odom的偏航角
+  const mapToOdomYaw = Math.atan2(
+    2.0 *
+      (odomToMap.rotation.x * odomToMap.rotation.y +
+        odomToMap.rotation.z * odomToMap.rotation.w),
+    1.0 -
+      2.0 *
+        (odomToMap.rotation.y * odomToMap.rotation.y +
+          odomToMap.rotation.z * odomToMap.rotation.z),
+  )
+  // 计算odom到base_footprint的偏航角
+  const odomToBaseYaw = Math.atan2(
+    2.0 *
+      (baseFootprintToOdom.rotation.x * baseFootprintToOdom.rotation.y +
+        baseFootprintToOdom.rotation.z * baseFootprintToOdom.rotation.w),
+    1.0 -
+      2.0 *
+        (baseFootprintToOdom.rotation.y * baseFootprintToOdom.rotation.y +
+          baseFootprintToOdom.rotation.z * baseFootprintToOdom.rotation.z),
+  )
+  // 计算map到odom的旋转矩阵
+  const cosMapToOdom = Math.cos(mapToOdomYaw)
+  const sinMapToOdom = Math.sin(mapToOdomYaw)
+  // 将odomToBaseFootprint的平移向量通过mapToOdom的旋转进行旋转
+  const rotatedOdomToBaseX =
+    baseFootprintToOdom.translation.x * cosMapToOdom -
+    baseFootprintToOdom.translation.y * sinMapToOdom
+  const rotatedOdomToBaseY =
+    baseFootprintToOdom.translation.x * sinMapToOdom +
+    baseFootprintToOdom.translation.y * cosMapToOdom
+  // 将旋转后的平移向量加到mapToOdom的平移向量上
+  const finalTranslationX = odomToMap.translation.x + rotatedOdomToBaseX
+  const finalTranslationY = odomToMap.translation.y + rotatedOdomToBaseY
+  // 对于旋转，直接将两个偏航角相加
+  const finalYaw = (mapToOdomYaw + odomToBaseYaw) * (180 / Math.PI)
+
+  return {
+    x: finalTranslationX,
+    y: finalTranslationY,
+    yaw: finalYaw,
   }
 }

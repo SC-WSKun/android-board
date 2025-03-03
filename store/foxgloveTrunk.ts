@@ -8,7 +8,7 @@ import {
 } from '@foxglove/ws-protocol'
 import { MessageWriter, MessageReader } from '@foxglove/rosmsg2-serialization'
 import { parse as parseMessageDefinition } from '@foxglove/rosmsg'
-import _, { reject } from 'lodash'
+import _ from 'lodash'
 import {
   setClient,
   setChannels,
@@ -201,7 +201,7 @@ export const callService =
       data: new DataView(uint8Array.buffer),
     })
     dispatch(incrementCallServiceId())
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
       // 将监听回调函数抽离的目的是避免监听未及时off造成的内存泄漏
       function serviceResponseHandler(response: any) {
         const parseResDefinitions = parseMessageDefinition(
@@ -212,13 +212,14 @@ export const callService =
         )
         try {
           const reader = new MessageReader(parseResDefinitions)
-          // console.log('res.data', response.data);
-          // console.log('reader', reader);
-
-          const res = reader.readMessage(response.data)
-          resolve(res)
+          if (response.data) {
+            const res = reader.readMessage(response.data)
+            resolve(res)
+          } else {
+            console.log('response data is null')
+          }
+          console.log('read success')
         } catch (err: any) {
-          // TODO: 这里会出现RangeError: DataView.prototype.get<Type>(): Cannot read that many bytes导致崩溃
           reject(err)
         } finally {
           client?.off('serviceCallResponse', serviceResponseHandler)
@@ -332,6 +333,6 @@ export const readMsgWithSubId =
       const reader = new MessageReader(parseDefinitions)
       return reader.readMessage(data)
     } else {
-      console.error('sub not found')
+      console.error(`sub not found: ${subId}`)
     }
   }

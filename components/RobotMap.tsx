@@ -15,6 +15,9 @@ import {
   unSubscribeTopic,
 } from '@/store/foxgloveTrunk'
 import { useTransformContext } from '@/store/transformSlice'
+import _ from 'lodash'
+import { MessageData } from '@foxglove/ws-protocol'
+import { useCar } from '@/hooks/useCar'
 
 interface IRobotMapProps {
   plugins: string[]
@@ -25,13 +28,16 @@ export function RobotMap(props: IRobotMapProps) {
   const width = 1000 // canvas宽度
   const height = 600 // canvas高度
   const dispatch = useDispatch<AppDispatch>()
-  const { drawingMap, mapImage, updateLaserPoints, updateMapImage } =
-    useDrawContext()
+  const {
+    drawingMap,
+    mapImage,
+    updateLaserPoints,
+    updateMapImage,
+    updateMapInfo,
+  } = useDrawContext()
+  const { subscribeCarPosition } = useCar()
   const { updateTransform } = useTransformContext()
-  // const { getTransform } = useTransformContext()
-  const [mapInfo, setMapInfo] = useState<any>(undefined) // 地图的长宽等信息
-  const [mapData, setMapData] = useState<any>(undefined) // 地图的点云信息
-  const [numberOfBoxes, setNumberOfBoxes] = useState<number>(150)
+  const [displayLaser, setDisplayLaser] = useState<any[]>([])
 
   const updateTransforms = (
     transforms: {
@@ -48,9 +54,16 @@ export function RobotMap(props: IRobotMapProps) {
   /**
    * 渲染地图，赋值给image
    */
-  const renderMapImage = () => {
+  const renderMapImage = (mapInfo: any, mapData: any) => {
     const base64String = btoa(String.fromCharCode(...mapData))
-    updateMapImage(width, height, mapInfo.width, mapInfo.height, base64String)
+    updateMapImage(
+      width,
+      height,
+      mapInfo.width,
+      mapInfo.height,
+      mapInfo.resolution,
+      base64String,
+    )
   }
 
   /**
@@ -99,21 +112,6 @@ export function RobotMap(props: IRobotMapProps) {
   }
 
   /**
-   * 处理tf的信息
-   */
-  const tfHandler = async (
-    op: any,
-    subscriptionId: number,
-    timestamp: number,
-    data: any,
-  ) => {
-    const parseData: any = await dispatch(
-      readMsgWithSubId(subscriptionId, data),
-    )
-    updateTransforms(parseData.transforms)
-  }
-
-  /**
    * 处理tf_static的信息
    */
   const tfStaticHandler = async (
@@ -133,6 +131,7 @@ export function RobotMap(props: IRobotMapProps) {
    */
   useEffect(() => {
     const fetchData = async () => {
+      console.log('fetching data')
       try {
         const res: any = await dispatch(
           callService('/tiered_nav_state_machine/get_grid_map', {
@@ -140,41 +139,32 @@ export function RobotMap(props: IRobotMapProps) {
           }),
         )
         if (res?.map?.info) {
-          setMapInfo(res.map.info)
-          setMapData(res.map.data)
+          updateMapInfo(res.map.info)
+          renderMapImage(res.map.info, res.map.data)
+          subscribeTopics()
         } else {
-          setMapInfo(undefined)
+          throw new Error('Map data is undefined')
         }
       } catch (error) {
         console.error('Error fetching map data:', error)
-        setMapInfo(undefined)
+        console.error('fetching map is:', drawingMap)
       }
     }
     fetchData()
   }, [drawingMap])
 
   /**
-   * 地图点云信息变化时更新地图
-   */
-  useEffect(() => {
-    if (mapData) {
-      renderMapImage()
-    }
-  }, [mapData])
-
-  /**
    * 订阅必须topic
    * tf: 更新baseFootprintToOdom,leftWheelToBaseLink,rightWheelToBaseLink,odomToMap(导航模式下)
    * tf_static: 更新laserLinkToBaseLink, baseLinkToBaseFootprint
    */
-  useEffect(() => {
-    dispatch(subscribeTopic('/tf'))
-      .then((res: any) => {
-        dispatch(listenMessage('/tf', tfHandler))
-      })
-      .catch((err: any) => {
-        console.error('[RobotMap] subscribe topic tf error:', err)
-      })
+  const subscribeTopics = () => {
+    dispatch(
+      callService('/tiered_nav_state_machine/switch_mode', {
+        mode: 2,
+      }),
+    )
+    subscribeCarPosition()
     dispatch(subscribeTopic('/tf_static'))
       .then((res: any) => {
         dispatch(listenMessage('/tf_static', tfStaticHandler))
@@ -182,39 +172,32 @@ export function RobotMap(props: IRobotMapProps) {
       .catch((err: any) => {
         console.error('[RobotMap] subscribe topic tf_static error:', err)
       })
-    dispatch(subscribeTopic('/scan'))
-      .then((res: any) => {
-        dispatch(listenMessage('/scan', laserPointHandler))
-      })
-      .catch((err: any) => {
-        console.error('[RobotMap] subscribe topic scan error:', err)
-      })
-    dispatch(
-      callService('/tiered_nav_state_machine/switch_mode', {
-        mode: 2,
-      }),
-    )
-    return () => {
-      dispatch(unSubscribeTopic('/tf'))
-      dispatch(unSubscribeTopic('/tf_static'))
-      dispatch(unSubscribeTopic('/scan'))
-    }
-  }, [])
+    // dispatch(subscribeTopic('/scan'))
+    //   .then((res: any) => {
+    //     dispatch(listenMessage('/scan', laserPointHandler))
+    //   })
+    //   .catch((err: any) => {
+    //     console.error('[RobotMap] subscribe topic scan error:', err)
+    //   })
+    // return () => {
+    //  dispatch(unSubscribeTopic('/scan'))
+    // }
+  }
 
-  useEffect(() => {
-    function updateNumberOfBox() {
-      setTimeout(() => {
-        const state = store.getState()
-        const mapHasInit = state.draw.mapHasInit
-        if (mapHasInit) {
-          const laserPoints = state.draw.laserPoints
-          setNumberOfBoxes(laserPoints.length)
-        }
-        updateNumberOfBox()
-      }, 1000)
-    }
-    updateNumberOfBox()
-  }, [])
+  // useEffect(() => {
+  //   function updateLaserPoint() {
+  //     setTimeout(() => {
+  //       const state = store.getState()
+  //       const mapHasInit = state.draw.mapHasInit
+  //       if (mapHasInit) {
+  //         const laserPoints = state.draw.laserPoints
+  //         setDisplayLaser(laserPoints)
+  //       }
+  //       updateLaserPoint()
+  //     }, 250)
+  //   }
+  //   updateLaserPoint()
+  // }, [])
 
   return (
     <View
@@ -232,7 +215,7 @@ export function RobotMap(props: IRobotMapProps) {
           width={1000}
           height={600}
         />
-        <LaserPointAtlas numberOfBoxes={numberOfBoxes} />
+        {/* <LaserPointAtlas laserPoints={displayLaser} /> */}
       </Canvas>
     </View>
   )

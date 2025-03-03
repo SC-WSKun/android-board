@@ -1,14 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
-import {
-  FoxgloveClient,
-  Channel,
-  ClientChannelWithoutId,
-  Service,
-  MessageData,
-} from '@foxglove/ws-protocol'
-import { MessageWriter, MessageReader } from '@foxglove/rosmsg2-serialization'
-import { parse as parseMessageDefinition } from '@foxglove/rosmsg'
-import _ from 'lodash'
+import { FoxgloveClient, Channel, Service } from '@foxglove/ws-protocol'
 
 interface FoxgloveState {
   client: FoxgloveClient | null

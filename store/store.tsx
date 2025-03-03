@@ -9,6 +9,11 @@ const store = configureStore({
     foxglove: foxgloveReducer,
     transform: transformReducer,
   },
+  middleware: getDefaultMiddleware =>
+    getDefaultMiddleware({
+      immutableCheck: false,
+      serializableCheck: false,
+    }),
 })
 
 export type RootState = ReturnType<typeof store.getState>

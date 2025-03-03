@@ -28,16 +28,10 @@
     npx expo start
    ```
 
-## Get a fresh project
+## 踩的一些坑
+1. **[RangeError: DataView.prototype.get<Type>(): Cannot read that many bytes]**
 
-When you're ready, run:
-
-```bash
-npm run reset-project
-```
-
-This command will move the starter code to the **app-example** directory and
-create a blank **app** directory where you can start developing.
+   callService调用的时候需要注意service的异步更新导致的error。特别注意switch_mode和其它service一起调用。如果会出现
 
 ## 资源链接
 1. [腾讯云Deepseek API](https://cloud.tencent.com/document/product/1772/115963)

@@ -46,10 +46,9 @@ export function LabelView() {
     </TouchableOpacity>
   )
   useEffect(() => {
-    getLabels().then(res => {
+    getLabels().then((res: any) => {
       const { result, labels } = res
       if (result === true) {
-        console.log('labels:', labels)
         setLabelList(labels)
       } else {
         console.error('getLabels error, maybe not in navigation mode')

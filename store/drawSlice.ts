@@ -13,6 +13,18 @@ export interface DrawState {
   drawingMap: RobotMap | undefined
   mapImage: any
   laserPoints: LaserPoints
+  scale: number
+  mapInfo: {
+    width: number
+    height: number
+    origin: {
+      position: {
+        x: number
+        y: number
+      }
+    }
+    resolution: number
+  }
 }
 
 const initialState: DrawState = {
@@ -21,6 +33,18 @@ const initialState: DrawState = {
   drawingMap: undefined,
   laserPoints: [],
   mapImage: undefined,
+  scale: 1,
+  mapInfo: {
+    width: 1000,
+    height: 600,
+    origin: {
+      position: {
+        x: 0,
+        y: 0,
+      },
+    },
+    resolution: 1,
+  },
 }
 
 const drawSlice = createSlice({
@@ -43,7 +67,8 @@ const drawSlice = createSlice({
         height: number
         mapWidth: number
         mapHeight: number
-        mapData: any // 这里mapData要用base64，因为直接传二进制数据redux会因为不能序列化数据而报错
+        resolution: number
+        mapData: any // 这里mapData要用base64，因为直接传二进制数据redux会因为不能序列化数据而报错（现在把检查二进制的middleware关了，不过保险起见还是转一下）
       }>,
     ) {
       const width = action.payload.width
@@ -55,10 +80,11 @@ const drawSlice = createSlice({
       for (let i = 0; i < binaryString.length; i++) {
         mapData[i] = binaryString.charCodeAt(i)
       }
-      const pixels = new Uint8Array(1000 * 600 * 4) // 初始化像素数组
+      const pixels = new Uint8Array(width * height * 4) // 初始化像素数组
       const widthScale = mapWidth / width
       const heightScale = mapHeight / height
-      const mapScale = Math.max(widthScale, heightScale) // 计算缩放比例
+      const mapScale = Math.min(widthScale, heightScale) // 计算缩放比例
+      state.scale = mapScale
 
       // 填充 pixels 数组
       for (let row = 0; row < height; row++) {
@@ -95,6 +121,18 @@ const drawSlice = createSlice({
     updateLaserPoints(state, action: PayloadAction<LaserPoints>) {
       state.laserPoints = action.payload
     },
+
+    updateMapInfo(
+      state,
+      action: PayloadAction<{
+        width: number
+        height: number
+        origin: { position: { x: number; y: number } }
+        resolution: number
+      }>,
+    ) {
+      state.mapInfo = action.payload
+    },
   },
 })
 
@@ -104,17 +142,20 @@ export const {
   changeMap,
   updateLaserPoints,
   updateMapImage,
+  updateMapInfo,
 } = drawSlice.actions
 export default drawSlice.reducer
 
 export function useDrawContext() {
   const dispatch = useDispatch()
+  const laserPoints = useSelector((state: RootState) => state.draw.laserPoints)
   const mapHasInit = useSelector((state: RootState) => state.draw.mapHasInit)
   const currentView = useSelector((state: RootState) => state.draw.currentView)
   const drawingMap = useSelector((state: RootState) => state.draw.drawingMap)
   const mapImage = useSelector((state: RootState) => state.draw.mapImage)
 
   return {
+    laserPoints,
     mapHasInit,
     currentView,
     drawingMap,
@@ -128,10 +169,26 @@ export function useDrawContext() {
       height: number,
       mapWidth: number,
       mapHeight: number,
+      resolution: number,
       mapData: any,
     ) => {
-      dispatch(updateMapImage({ width, height, mapWidth, mapHeight, mapData }))
+      dispatch(
+        updateMapImage({
+          width,
+          height,
+          mapWidth,
+          mapHeight,
+          resolution,
+          mapData,
+        }),
+      )
       dispatch(setMapInit(true))
     },
+    updateMapInfo: (mapInfo: {
+      width: number
+      height: number
+      origin: { position: { x: number; y: number } }
+      resolution: number
+    }) => dispatch(updateMapInfo(mapInfo)),
   }
 }
