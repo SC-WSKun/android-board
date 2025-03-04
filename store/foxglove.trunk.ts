@@ -20,7 +20,7 @@ import {
   setMsgEncoding,
   incrementCallServiceId,
   setConnected,
-} from './foxgloveSlice'
+} from './foxglove.slice'
 
 let client: FoxgloveClient | null = null
 

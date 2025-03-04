@@ -1,7 +1,7 @@
 import { configureStore } from '@reduxjs/toolkit'
-import drawReducer from './drawSlice'
-import foxgloveReducer from './foxgloveSlice'
-import transformReducer from './transformSlice'
+import drawReducer from './draw.slice'
+import foxgloveReducer from './foxglove.slice'
+import transformReducer from './transform.slice'
 
 const store = configureStore({
   reducer: {
