@@ -7,16 +7,22 @@ import {
   readMsgWithSubId,
   subscribeTopic,
   unSubscribeTopic,
-} from '@/store/foxgloveTrunk'
-import { mapToBaseFootprint } from '@/utils/coodinate'
-import { useTransformContext } from '@/store/transformSlice'
+} from '@/store/foxglove.trunk'
+import { BaseFootprintToMap, mapToCanvas } from '@/utils/coodinate'
+import { useTransformContext } from '@/store/transform.slice'
+
+export type CarPosition = {
+  x: number
+  y: number
+  yaw: number
+}
 
 export function useCar() {
-  const [carPosition, updateCarPosition] = useState<{
-    x: number
-    y: number
-    yaw: number
-  }>({ x: 0, y: 0, yaw: 0 })
+  const [carPosition, updateCarPosition] = useState<CarPosition>({
+    x: 0,
+    y: 0,
+    yaw: 0,
+  })
   const { updateTransform } = useTransformContext()
   const dispatch = useDispatch<AppDispatch>()
   /**
@@ -57,7 +63,12 @@ export function useCar() {
       const state = store.getState()
       const odomToMap = state.transform.odomToMap
       const baseFootprintToOdom = state.transform.baseFootprintToOdom
-      const newPosition = mapToBaseFootprint(odomToMap, baseFootprintToOdom)
+      const mapPosition = BaseFootprintToMap(odomToMap, baseFootprintToOdom)
+      if (!mapPosition) return
+      const newPosition = {
+        ...mapToCanvas(mapPosition.x, mapPosition.y),
+        yaw: mapPosition.yaw,
+      }
       if (newPosition) {
         updateCarPosition(newPosition)
       }

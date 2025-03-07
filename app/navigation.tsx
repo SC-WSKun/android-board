@@ -4,7 +4,7 @@ import { useMemo } from 'react'
 import { LabelView } from '@/components/LabelView'
 import { MapSelectView } from '@/components/MapSelectView'
 import { RobotMap } from '@/components/RobotMap'
-import { useDrawContext } from '@/store/drawSlice'
+import { useDrawContext } from '@/store/draw.slice'
 
 function NavigationScreen() {
   const { currentView } = useDrawContext()

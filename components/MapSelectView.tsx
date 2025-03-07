@@ -1,5 +1,5 @@
-import { useDrawContext } from '@/store/drawSlice'
-import { callService } from '@/store/foxgloveTrunk'
+import { useDrawContext } from '@/store/draw.slice'
+import { callService } from '@/store/foxglove.trunk'
 import { AppDispatch } from '@/store/store'
 import { useEffect, useState } from 'react'
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'

@@ -1,4 +1,4 @@
-import { callService } from '@/store/foxgloveTrunk'
+import { callService } from '@/store/foxglove.trunk'
 import { AppDispatch } from '@/store/store'
 import { useEffect } from 'react'
 import { Image, Pressable, StyleSheet } from 'react-native'

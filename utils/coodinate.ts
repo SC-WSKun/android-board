@@ -1,3 +1,5 @@
+import store from '@/store/store'
+
 // 像素坐标转真实世界坐标
 export const pixelToWorldCoordinate = (
   pixelOffsetX: number,
@@ -18,11 +20,11 @@ export const pixelToWorldCoordinate = (
 export const mapToCanvas = (
   worldX: number,
   worldY: number,
-  scale: number,
-  resolution: number,
-  originX: number,
-  originY: number,
 ): { x: number; y: number } => {
+  const { mapInfo, scale } = store.getState().draw
+  const { resolution } = mapInfo
+  const { x: originX, y: originY } = mapInfo.origin.position
+
   return {
     x: (worldX - originX) / (scale * resolution),
     y: (worldY - originY) / (scale * resolution),
@@ -49,8 +51,8 @@ export const applyTransform = (
 }
 
 // 小车在map的位置
-// map -> odom -> base_footprint
-export const mapToBaseFootprint = (
+// baseFootprint到Map的transform就是baseFootprint在Map下的位置，即小车的位置
+export const BaseFootprintToMap = (
   odomToMap: Transform | null,
   baseFootprintToOdom: Transform | null,
 ) => {

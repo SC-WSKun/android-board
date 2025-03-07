@@ -1,4 +1,4 @@
-import { callService } from '@/store/foxgloveTrunk'
+import { callService } from '@/store/foxglove.trunk'
 import { AppDispatch } from '@/store/store'
 import { useState } from 'react'
 import { useDispatch } from 'react-redux'

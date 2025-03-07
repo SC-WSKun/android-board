@@ -1,5 +1,5 @@
 import ImageContainer from '@/components/ui/ImageContainer'
-import { initClient } from '@/store/foxgloveTrunk'
+import { initClient } from '@/store/foxglove.trunk'
 import { AppDispatch } from '@/store/store'
 import { useState } from 'react'
 import {

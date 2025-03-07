@@ -1,4 +1,4 @@
-import { TransformState } from '@/store/transformSlice'
+import { TransformState } from '@/store/transform.slice'
 
 export const TRANSFORM_MAP: { [key: string]: keyof TransformState } = {
   imu_link: 'imuLinkToBaseLink',

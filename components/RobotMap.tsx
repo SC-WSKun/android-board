@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 import { View } from 'react-native'
-import { Canvas, Image } from '@shopify/react-native-skia'
+import { Canvas, Circle, Image } from '@shopify/react-native-skia'
 import { transformPointCloud } from '@/utils/laserPoint'
 import LaserPointAtlas from './LaserPointAtlas'
 import { applyTransform } from '@/utils/coodinate'
-import { useDrawContext } from '@/store/drawSlice'
+import { useDrawContext } from '@/store/draw.slice'
 import { useDispatch } from 'react-redux'
 import store, { AppDispatch } from '@/store/store'
 import {
@@ -12,12 +12,11 @@ import {
   listenMessage,
   readMsgWithSubId,
   subscribeTopic,
-  unSubscribeTopic,
-} from '@/store/foxgloveTrunk'
-import { useTransformContext } from '@/store/transformSlice'
-import _ from 'lodash'
-import { MessageData } from '@foxglove/ws-protocol'
+} from '@/store/foxglove.trunk'
+import { useTransformContext } from '@/store/transform.slice'
 import { useCar } from '@/hooks/useCar'
+import { CarIcon } from './CarIcon'
+import { useMap } from '@/hooks/useMap'
 
 interface IRobotMapProps {
   plugins: string[]
@@ -28,14 +27,10 @@ export function RobotMap(props: IRobotMapProps) {
   const width = 1000 // canvas宽度
   const height = 600 // canvas高度
   const dispatch = useDispatch<AppDispatch>()
-  const {
-    drawingMap,
-    mapImage,
-    updateLaserPoints,
-    updateMapImage,
-    updateMapInfo,
-  } = useDrawContext()
-  const { subscribeCarPosition } = useCar()
+  const { drawingMap, updateLaserPoints } = useDrawContext()
+  const { viewImage, fetchImageData } = useMap()
+  const { carPosition, subscribeCarPosition, unsubscribeCarPostition } =
+    useCar()
   const { updateTransform } = useTransformContext()
   const [displayLaser, setDisplayLaser] = useState<any[]>([])
 
@@ -49,21 +44,6 @@ export function RobotMap(props: IRobotMapProps) {
     transforms?.forEach(transform => {
       updateTransform(transform.child_frame_id, transform.transform)
     })
-  }
-
-  /**
-   * 渲染地图，赋值给image
-   */
-  const renderMapImage = (mapInfo: any, mapData: any) => {
-    const base64String = btoa(String.fromCharCode(...mapData))
-    updateMapImage(
-      width,
-      height,
-      mapInfo.width,
-      mapInfo.height,
-      mapInfo.resolution,
-      base64String,
-    )
   }
 
   /**
@@ -127,33 +107,6 @@ export function RobotMap(props: IRobotMapProps) {
   }
 
   /**
-   * 获取地图数据
-   */
-  useEffect(() => {
-    const fetchData = async () => {
-      console.log('fetching data')
-      try {
-        const res: any = await dispatch(
-          callService('/tiered_nav_state_machine/get_grid_map', {
-            info: drawingMap,
-          }),
-        )
-        if (res?.map?.info) {
-          updateMapInfo(res.map.info)
-          renderMapImage(res.map.info, res.map.data)
-          subscribeTopics()
-        } else {
-          throw new Error('Map data is undefined')
-        }
-      } catch (error) {
-        console.error('Error fetching map data:', error)
-        console.error('fetching map is:', drawingMap)
-      }
-    }
-    fetchData()
-  }, [drawingMap])
-
-  /**
    * 订阅必须topic
    * tf: 更新baseFootprintToOdom,leftWheelToBaseLink,rightWheelToBaseLink,odomToMap(导航模式下)
    * tf_static: 更新laserLinkToBaseLink, baseLinkToBaseFootprint
@@ -184,6 +137,14 @@ export function RobotMap(props: IRobotMapProps) {
     // }
   }
 
+  useEffect(() => {
+    fetchImageData()
+      .then(subscribeTopics)
+      .catch(err => {
+        console.error('fetch Image error:', err)
+      })
+  }, [drawingMap])
+
   // useEffect(() => {
   //   function updateLaserPoint() {
   //     setTimeout(() => {
@@ -208,7 +169,7 @@ export function RobotMap(props: IRobotMapProps) {
     >
       <Canvas style={{ width, height }}>
         <Image
-          image={mapImage}
+          image={viewImage}
           fit='contain'
           x={0}
           y={0}
@@ -216,6 +177,7 @@ export function RobotMap(props: IRobotMapProps) {
           height={600}
         />
         {/* <LaserPointAtlas laserPoints={displayLaser} /> */}
+        <CarIcon carPosition={carPosition} />
       </Canvas>
     </View>
   )
