@@ -28,7 +28,7 @@ export function useCar() {
   /**
    * 订阅小车位置
    */
-  const subscribeCarPosition = () => {
+  const subscribeCarPosition = (fn: any) => {
     console.log('[useCar] start subscribe car position')
     dispatch(subscribeTopic('/tf'))
       .then((subId: number) => {
@@ -37,6 +37,37 @@ export function useCar() {
       .catch((err: any) => {
         console.error('[RobotMap] subscribe topic tf error:', err)
       })
+
+    /**
+     * 处理小车Topic信息
+     */
+    const msgHandler = _.throttle(
+      async (op: any, subscriptionId: number, timestamp: number, data: any) => {
+        const parseData: any = await dispatch(
+          readMsgWithSubId(subscriptionId, data),
+        )
+        if (!parseData) return
+
+        const { transforms } = parseData
+        if (transforms) {
+          updateTransforms(transforms)
+        }
+        const state = store.getState()
+        const odomToMap = state.transform.odomToMap
+        const baseFootprintToOdom = state.transform.baseFootprintToOdom
+        const mapPosition = BaseFootprintToMap(odomToMap, baseFootprintToOdom)
+        if (!mapPosition) return
+        const newPosition = {
+          ...mapToCanvas(mapPosition.x, mapPosition.y),
+          yaw: mapPosition.yaw,
+        }
+        if (newPosition) {
+          updateCarPosition(newPosition)
+          fn(newPosition)
+        }
+      },
+      5,
+    )
   }
 
   /**
@@ -45,36 +76,6 @@ export function useCar() {
   const unsubscribeCarPostition = () => {
     dispatch(unSubscribeTopic('/tf'))
   }
-
-  /**
-   * 处理小车Topic信息
-   */
-  const msgHandler = _.throttle(
-    async (op: any, subscriptionId: number, timestamp: number, data: any) => {
-      const parseData: any = await dispatch(
-        readMsgWithSubId(subscriptionId, data),
-      )
-      if (!parseData) return
-
-      const { transforms } = parseData
-      if (transforms) {
-        updateTransforms(transforms)
-      }
-      const state = store.getState()
-      const odomToMap = state.transform.odomToMap
-      const baseFootprintToOdom = state.transform.baseFootprintToOdom
-      const mapPosition = BaseFootprintToMap(odomToMap, baseFootprintToOdom)
-      if (!mapPosition) return
-      const newPosition = {
-        ...mapToCanvas(mapPosition.x, mapPosition.y),
-        yaw: mapPosition.yaw,
-      }
-      if (newPosition) {
-        updateCarPosition(newPosition)
-      }
-    },
-    5,
-  )
 
   const updateTransforms = (
     transforms: {

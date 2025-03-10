@@ -28,7 +28,7 @@ export function RobotMap(props: IRobotMapProps) {
   const height = 600 // canvas高度
   const dispatch = useDispatch<AppDispatch>()
   const { drawingMap, updateLaserPoints } = useDrawContext()
-  const { viewImage, fetchImageData } = useMap()
+  const { viewImage, fetchImageData, updateViewOrigin } = useMap()
   const { carPosition, subscribeCarPosition, unsubscribeCarPostition } =
     useCar()
   const { updateTransform } = useTransformContext()
@@ -117,7 +117,7 @@ export function RobotMap(props: IRobotMapProps) {
         mode: 2,
       }),
     )
-    subscribeCarPosition()
+    subscribeCarPosition(updateViewOrigin)
     dispatch(subscribeTopic('/tf_static'))
       .then((res: any) => {
         dispatch(listenMessage('/tf_static', tfStaticHandler))
