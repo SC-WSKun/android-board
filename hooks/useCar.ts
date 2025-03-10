@@ -66,7 +66,7 @@ export function useCar() {
           fn(newPosition)
         }
       },
-      5,
+      500,
     )
   }
 

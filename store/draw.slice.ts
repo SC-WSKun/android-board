@@ -1,7 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 import { useDispatch, useSelector } from 'react-redux'
 import { RootState } from './store'
-import { AlphaType, ColorType, Skia } from '@shopify/react-native-skia'
 
 type NavigationView = 'label' | 'select-map' | 'navigation'
 
@@ -24,6 +23,7 @@ export interface DrawState {
     }
     resolution: number
   }
+  viewResolution: number
 }
 
 const initialState: DrawState = {
@@ -43,6 +43,7 @@ const initialState: DrawState = {
     },
     resolution: 1,
   },
+  viewResolution: 0.25,
 }
 
 const drawSlice = createSlice({
@@ -73,6 +74,10 @@ const drawSlice = createSlice({
     ) {
       state.mapInfo = action.payload
     },
+
+    updateViewResolution(state, action: PayloadAction<number>) {
+      state.viewResolution = action.payload
+    },
   },
 })
 
@@ -82,12 +87,16 @@ export const {
   changeMap,
   updateLaserPoints,
   updateMapInfo,
+  updateViewResolution,
 } = drawSlice.actions
 export default drawSlice.reducer
 
 export function useDrawContext() {
   const dispatch = useDispatch()
   const mapInfo = useSelector((state: RootState) => state.draw.mapInfo)
+  const viewResolution = useSelector(
+    (state: RootState) => state.draw.viewResolution,
+  )
   const laserPoints = useSelector((state: RootState) => state.draw.laserPoints)
   const mapHasInit = useSelector((state: RootState) => state.draw.mapHasInit)
   const currentView = useSelector((state: RootState) => state.draw.currentView)
@@ -95,6 +104,7 @@ export function useDrawContext() {
 
   return {
     mapInfo,
+    viewResolution,
     laserPoints,
     mapHasInit,
     currentView,

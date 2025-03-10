@@ -17,25 +17,20 @@ type ViewOrigin = {
 
 export function useMap() {
   const dispatch = useDispatch<AppDispatch>()
-  const { drawingMap, updateMapInfo } = useDrawContext()
+  const { mapInfo, viewResolution, drawingMap, updateMapInfo } =
+    useDrawContext()
   const [viewOrigin, setViewOrigin] = useState<ViewOrigin>()
-  const { mapInfo } = store.getState().draw
   const [mapData, setMapData] = useState<Uint8Array>()
-  const [viewResolution, setViewResolution] = useState<number>(0.25) // 视图放大参数，表示1像素多少米
 
   // 坐标计算：
   // (originX, originY) / resolution -> (x,y)(resolution = 1)
   // (x,y)(resolution = 1) * viewResolution -> (x,y)(resolution = viewResolution)
   // 这里因为已知viewResolution的坐标，所以要进行反推
   const viewImage = useMemo(() => {
-    console.log('render new image:', viewOrigin)
     if (!mapInfo || !mapData || !viewOrigin) return null
     const pixels = new Uint8Array(VIEW_WIDTH * VIEW_HEIGHT * 4) // 初始化像素数组
     const scale = mapInfo.resolution / viewResolution
-    console.group('viewOrigin')
-    console.log(viewOrigin.startX, ' ', viewOrigin.endX)
-    console.log(viewOrigin.startY, ' ', viewOrigin.endY)
-    console.groupEnd()
+
     // 填充 pixels 数组
     for (let row = 0; row < VIEW_HEIGHT; row++) {
       for (let col = 0; col < VIEW_WIDTH; col++) {
@@ -107,27 +102,17 @@ export function useMap() {
    * standardWdith * viewResolution -> viewWidth
    */
   const updateViewOrigin = (carPosition: { x: number; y: number }) => {
-    console.log('carPosition', carPosition.x, ' ', carPosition.y)
-    const { mapInfo } = store.getState().draw
+    console.log('carPosition:', carPosition)
+    const { mapInfo, viewResolution } = store.getState().draw
     if (!mapInfo) return
     const scale = mapInfo.resolution / viewResolution
     const originWidth = VIEW_WIDTH * scale
     const originHeight = VIEW_HEIGHT * scale
-    console.log('originWidth', originWidth)
 
     // 计算视图区域，让小车保持在中心
-    const startX = Math.ceil(
-      Math.min(
-        Math.max(carPosition.x - originWidth / 2, 0),
-        mapInfo.width - originWidth,
-      ),
-    )
-    const startY = Math.ceil(
-      Math.min(
-        Math.max(carPosition.y - originHeight / 2, 0),
-        mapInfo.height - originHeight,
-      ),
-    )
+    const startX = Math.ceil(carPosition.x - originWidth / 2)
+    const startY = Math.ceil(carPosition.y - originHeight / 2)
+    console.log('startX:', startX, ' ', startY)
     const endX = startX + originWidth
     const endY = startY + originHeight
 
