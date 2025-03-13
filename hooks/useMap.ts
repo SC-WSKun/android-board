@@ -1,3 +1,4 @@
+import { mapLog } from '@/log/logger'
 import { useDrawContext } from '@/store/draw.slice'
 import { callService } from '@/store/foxglove.trunk'
 import store, { AppDispatch } from '@/store/store'
@@ -69,7 +70,7 @@ export function useMap() {
    * 拉取地图信息
    */
   const fetchImageData = async () => {
-    console.log('[useMap] start fetching data')
+    mapLog.info('start fetching map')
     if (!drawingMap) {
       return Promise.reject('drawingMap is undefined')
     }
@@ -87,10 +88,7 @@ export function useMap() {
         throw new Error('Map data is undefined')
       }
     } catch (error) {
-      console.error(
-        `[useMap] Error fetching map ${drawingMap.map_name} data:`,
-        error,
-      )
+      mapLog.error(`Error fetching map ${drawingMap.map_name} data:`, error)
       return Promise.reject(error)
     }
   }
@@ -102,7 +100,6 @@ export function useMap() {
    * standardWdith * viewResolution -> viewWidth
    */
   const updateViewOrigin = (carPosition: { x: number; y: number }) => {
-    console.log('carPosition:', carPosition)
     const { mapInfo, viewResolution } = store.getState().draw
     if (!mapInfo) return
     const scale = mapInfo.resolution / viewResolution
@@ -112,7 +109,6 @@ export function useMap() {
     // 计算视图区域，让小车保持在中心
     const startX = Math.ceil(carPosition.x - originWidth / 2)
     const startY = Math.ceil(carPosition.y - originHeight / 2)
-    console.log('startX:', startX, ' ', startY)
     const endX = startX + originWidth
     const endY = startY + originHeight
 
