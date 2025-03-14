@@ -28,10 +28,14 @@
     npx expo start
    ```
 
+## 开发建议
+1. 整个应用最复杂的应该就是地图组件，我的开发思路是用 hook 去做封装，每一个hook都对应一个组件，这样子后续管理地图插件比较方便，不要直接写在RobotMap里面。
+2. 日志打印，用react-native-logs，可以很方便的在控制台打印日志，并且可以设置日志等级，方便调试。
+
 ## 踩的一些坑
 1. **[RangeError: DataView.prototype.get<Type>(): Cannot read that many bytes]**
 
-   callService调用的时候需要注意service的异步更新导致的error。特别注意switch_mode和其它service一起调用。如果会出现
+   callService调用的时候需要注意service的异步更新导致的error。特别注意switch_mode和其它service一起调用。
 
 ## 资源链接
 1. [腾讯云Deepseek API](https://cloud.tencent.com/document/product/1772/115963)
