@@ -1,7 +1,13 @@
 import { StyleSheet, View, ImageBackground, Text } from 'react-native'
 import { Link } from 'expo-router'
+import { useEffect } from 'react'
+import { log } from '@/log/logger'
+import { NAVIGATION_MAP } from './_layout'
 
 export default function HomeScreen() {
+  useEffect(() => {
+    log.success('home screen')
+  }, [])
   return (
     <View style={styles.container}>
       <ImageBackground
@@ -11,16 +17,16 @@ export default function HomeScreen() {
         <Text style={styles.title}>迎宾机器人</Text>
 
         <View style={styles.buttonContainer}>
-          <Link style={styles.button} href='/communicate'>
-            对话
+          <Link style={styles.button} href={NAVIGATION_MAP.PATROL}>
+            巡逻
           </Link>
-          <Link style={styles.button} href='/navigation'>
+          <Link style={styles.button} href={NAVIGATION_MAP.NAVIGATION}>
             导航
           </Link>
           <Link style={styles.button} href='/buildmap'>
             建图
           </Link>
-          <Link style={styles.button} href='/setting'>
+          <Link style={styles.button} href={NAVIGATION_MAP.SETTING}>
             设置
           </Link>
         </View>

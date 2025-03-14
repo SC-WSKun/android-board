@@ -75,3 +75,11 @@ type Transform = {
     z: number
   }
 }
+
+/**
+ * 机器人巡检任务
+ */
+type RobotTask = {
+  patrol_points: any[]
+  task_name: string
+}

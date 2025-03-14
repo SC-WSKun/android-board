@@ -1,32 +1,25 @@
-import { useDrawContext } from '@/store/draw.slice'
 import { callService } from '@/store/foxglove.trunk'
 import { AppDispatch } from '@/store/store'
-import { useEffect, useState } from 'react'
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
+import { useRobotTaskContext } from '@/store/task.slice'
+import { useEffect } from 'react'
+import { StyleSheet, View, Text, TouchableOpacity } from 'react-native'
 import Icon from 'react-native-vector-icons/FontAwesome'
 import { useDispatch } from 'react-redux'
-
-interface IMapSelectView {
-  nextView: () => void
-}
-export function MapSelectView(props: IMapSelectView) {
-  const { nextView } = props
+export function TaskView() {
   const dispatch = useDispatch<AppDispatch>()
-  const [mapList, setMapList] = useState([])
-  const { changeMap } = useDrawContext()
+  const { taskList, updateTaskList } = useRobotTaskContext()
 
-  const handleSelectMap = (map: RobotMap) => {
-    changeMap(map)
-    nextView()
+  const handleSelectTask = (task: RobotTask) => {
+    console.log('Selected task:', task)
   }
 
   // 渲染地图卡片
-  const renderItem = (map: RobotMap) => (
+  const renderItem = (task: RobotTask) => (
     <TouchableOpacity
-      key={map.map_name}
+      key={task.task_name}
       style={[styles.card]}
       onPress={() => {
-        handleSelectMap(map)
+        handleSelectTask(task)
       }}
     >
       <Icon
@@ -35,32 +28,41 @@ export function MapSelectView(props: IMapSelectView) {
         color='#007bff'
         style={styles.cardIcon}
       />
-      <Text style={styles.cardTitle}>{map.map_name}</Text>
+      <Text style={styles.cardTitle}>{task.task_name}</Text>
     </TouchableOpacity>
   )
 
-  // 获取地图列表
+  const getTaskList = async () => {
+    try {
+      const res: any = await dispatch(
+        callService('/nav2_extended/get_patrol_tasks', {}),
+      )
+      if (res?.result === true) {
+        updateTaskList(res.tasks ?? [])
+      } else {
+        throw new Error('获取任务列表失败')
+      }
+    } catch (error) {
+      console.log('error', error)
+    }
+  }
+
   useEffect(() => {
-    dispatch(callService('/tiered_nav_conn_graph/list_maps', {}))
-      .then((res: any) => {
-        setMapList(res.maps)
-      })
-      .catch(err => {
-        alert('获取地图列表失败，请稍后再试')
-      })
+    getTaskList()
   }, [])
 
   return (
-    <View style={styles.navigationView}>
-      <Text style={styles.title}>请选择机器人加载的地图：</Text>
+    <View style={styles.taskView}>
+      <Text style={styles.title}>请选择您想执行的巡检任务</Text>
       <View style={styles.gridContainer}>
-        {mapList.map(item => renderItem(item))}
+        {taskList.map(item => renderItem(item))}
       </View>
     </View>
   )
 }
+
 const styles = StyleSheet.create({
-  navigationView: {
+  taskView: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',

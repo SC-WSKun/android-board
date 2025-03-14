@@ -16,6 +16,7 @@ import { useColorScheme } from '@/hooks/useColorScheme'
 const ROUTER_MAP = {
   HOME: 'index' as const,
   NAVIGATION: 'navigation' as const,
+  PATROL: 'patrol' as const,
   SETTING: 'setting' as const,
   NOT_FOUND: '+not-found' as const,
 }
@@ -27,6 +28,7 @@ type NavigationMapType = {
 
 export const NAVIGATION_MAP: NavigationMapType = {
   HOME: `/${ROUTER_MAP.HOME}`,
+  PATROL: `/${ROUTER_MAP.PATROL}`,
   NAVIGATION: `/${ROUTER_MAP.NAVIGATION}`,
   SETTING: `/${ROUTER_MAP.SETTING}`,
   NOT_FOUND: `/${ROUTER_MAP.NOT_FOUND}`,
@@ -61,6 +63,10 @@ export default function RootLayout() {
         <Stack>
           <Stack.Screen
             name={ROUTER_MAP.HOME}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name={ROUTER_MAP.PATROL}
             options={{ headerShown: false }}
           />
           <Stack.Screen
