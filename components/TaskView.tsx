@@ -5,12 +5,22 @@ import { useEffect } from 'react'
 import { StyleSheet, View, Text, TouchableOpacity } from 'react-native'
 import Icon from 'react-native-vector-icons/FontAwesome'
 import { useDispatch } from 'react-redux'
+
+type StartPatrolReq = {
+  task_name: string
+  loop_count: number
+}
 export function TaskView() {
   const dispatch = useDispatch<AppDispatch>()
   const { taskList, updateTaskList } = useRobotTaskContext()
 
   const handleSelectTask = (task: RobotTask) => {
     console.log('Selected task:', task)
+    const param = {
+      task_name: task.task_name,
+      loop_count: 1,
+    }
+    execTask(param)
   }
 
   // 渲染地图卡片
@@ -45,6 +55,12 @@ export function TaskView() {
     } catch (error) {
       console.log('error', error)
     }
+  }
+
+  const execTask = async (params: StartPatrolReq) => {
+    const res: any = await dispatch(
+      callService('/nav2_extended/start_patrol', params),
+    )
   }
 
   useEffect(() => {
