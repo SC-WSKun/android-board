@@ -1,13 +1,8 @@
 import { StyleSheet, View, ImageBackground, Text } from 'react-native'
 import { Link } from 'expo-router'
-import { useEffect } from 'react'
-import { log } from '@/log/logger'
 import { NAVIGATION_MAP } from './_layout'
 
 export default function HomeScreen() {
-  useEffect(() => {
-    log.success('home screen')
-  }, [])
   return (
     <View style={styles.container}>
       <ImageBackground

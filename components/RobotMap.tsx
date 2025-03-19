@@ -1,12 +1,10 @@
-import { useEffect, useState } from 'react'
-import { View } from 'react-native'
-import { Canvas, Circle, Image } from '@shopify/react-native-skia'
-import { transformPointCloud } from '@/utils/laserPoint'
+import { useEffect, useMemo } from 'react'
+import { Button, View, StyleSheet } from 'react-native'
+import { Canvas, Image } from '@shopify/react-native-skia'
 import LaserPointAtlas from './LaserPointAtlas'
-import { applyTransform } from '@/utils/coodinate'
 import { useDrawContext } from '@/store/draw.slice'
 import { useDispatch } from 'react-redux'
-import store, { AppDispatch } from '@/store/store'
+import { AppDispatch } from '@/store/store'
 import {
   callService,
   listenMessage,
@@ -17,6 +15,18 @@ import { useTransformContext } from '@/store/transform.slice'
 import { useCar } from '@/hooks/useCar'
 import { CarIcon } from './CarIcon'
 import { useMap } from '@/hooks/useMap'
+import { useLaser } from '@/hooks/useLaser'
+import { rosLog } from '@/log/logger'
+import {
+  GestureHandlerRootView,
+  GestureDetector,
+  Gesture,
+} from 'react-native-gesture-handler'
+import Animated, {
+  runOnJS,
+  useAnimatedStyle,
+  useSharedValue,
+} from 'react-native-reanimated'
 
 interface IRobotMapProps {
   plugins: string[]
@@ -27,13 +37,65 @@ export function RobotMap(props: IRobotMapProps) {
   const width = 1000 // canvas宽度
   const height = 600 // canvas高度
   const dispatch = useDispatch<AppDispatch>()
-  const { drawingMap, updateLaserPoints } = useDrawContext()
-  const { viewImage, fetchImageData, updateViewOrigin } = useMap()
+  const { drawingMap, userTransform, updateUserTransform } = useDrawContext()
+  const { viewImage, fetchImageData } = useMap()
   const { carPosition, subscribeCarPosition, unsubscribeCarPostition } =
     useCar()
+  const { displayLaser } = useLaser()
   const { updateTransform } = useTransformContext()
-  const [displayLaser, setDisplayLaser] = useState<any[]>([])
 
+  const translateX = useSharedValue(0)
+  const translateY = useSharedValue(0)
+
+  /**
+   * 用户拖拽事件
+   */
+  const dragGesture = Gesture.Pan()
+    .averageTouches(true)
+    .onStart(e => {
+      translateX.value = 0
+      translateY.value = 0
+    })
+    .onUpdate(e => {
+      translateX.value = e.translationX
+      translateY.value = e.translationY
+    })
+    .onEnd(() => {
+      // 这里必须用runOnJS来调用updateUserTransform，因为GestureDetector运行在Reanimated线程，而redux的状态更新在JS线程。
+      // 如果不使用runOnJS，RN会崩溃。
+      // todo: 这个位移需要做一下scale适配，不然很难看
+      runOnJS(updateUserTransform)({
+        x: userTransform.x - translateX.value,
+        y: userTransform.y - translateY.value,
+        resolution: userTransform.resolution,
+      })
+      // 重置canvas位置
+      translateX.value = 0
+      translateY.value = 0
+    })
+
+  const tapGesture = Gesture.Tap().onEnd((_event, success) => {
+    if (success) {
+      console.log('single tap!')
+    }
+  })
+
+  const composedEvent = Gesture.Exclusive(dragGesture, tapGesture)
+
+  /**
+   * 动画样式，直接让 Canvas 跟随手指
+   */
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateX: translateX.value },
+      { translateY: translateY.value },
+    ],
+  }))
+
+  /**
+   * 更新坐标变换矩阵
+   * @param transforms
+   */
   const updateTransforms = (
     transforms: {
       transform: Transform
@@ -43,51 +105,6 @@ export function RobotMap(props: IRobotMapProps) {
   ) => {
     transforms?.forEach(transform => {
       updateTransform(transform.child_frame_id, transform.transform)
-    })
-  }
-
-  /**
-   * 激光点云回调
-   */
-  const laserPointHandler = async (
-    op: any,
-    subscriptionId: number,
-    timestamp: number,
-    data: any,
-  ) => {
-    const parseData: any = await dispatch(
-      readMsgWithSubId(subscriptionId, data),
-    )
-    let laserFrame = parseData.header.frame_id
-    let points = transformPointCloud(parseData)
-    let transformedPoints = getPositionWithFrame(laserFrame, points)
-    if (transformedPoints) {
-      updateLaserPoints(transformedPoints)
-    }
-  }
-
-  /**
-   * 点云坐标系映射到map(世界坐标)
-   * laser_link -> base_link -> base_foot_print -> odom -> map
-   */
-  const getPositionWithFrame = (
-    frame_id: string,
-    points: { x: number; y: number }[],
-  ): { x: number; y: number }[] | null => {
-    if (!frame_id) return null
-    return points.map(position => {
-      // 这里在ws的回调中调用的，非react组件不能直接获得react的状态，所以要用store.getState
-      const state = store.getState()
-      const laserLinkToBaseLink = state.transform.laserLinkToBaseLink
-      const baseLinkToBaseFootprint = state.transform.baseLinkToBaseFootprint
-      const baseFootprintToOdom = state.transform.baseFootprintToOdom
-      const odomToMap = state.transform.odomToMap
-      let tmp: any = position
-      tmp = applyTransform(position, laserLinkToBaseLink)
-      tmp = applyTransform(tmp, baseLinkToBaseFootprint)
-      tmp = applyTransform(tmp, baseFootprintToOdom)
-      tmp = applyTransform(tmp, odomToMap)
-      return tmp
     })
   }
 
@@ -112,73 +129,60 @@ export function RobotMap(props: IRobotMapProps) {
    * tf_static: 更新laserLinkToBaseLink, baseLinkToBaseFootprint
    */
   const subscribeTopics = () => {
+    // 切换到导航模式
     dispatch(
       callService('/tiered_nav_state_machine/switch_mode', {
         mode: 2,
       }),
     )
-    subscribeCarPosition(updateViewOrigin)
+    // 更新小车定位，这里传入updateViewOrigin是为了让窗口跟随小车移动
+    subscribeCarPosition()
     dispatch(subscribeTopic('/tf_static'))
       .then((res: any) => {
         dispatch(listenMessage('/tf_static', tfStaticHandler))
       })
       .catch((err: any) => {
-        console.error('[RobotMap] subscribe topic tf_static error:', err)
+        rosLog.error('subscribe topic tf_static error:', err)
       })
-    // dispatch(subscribeTopic('/scan'))
-    //   .then((res: any) => {
-    //     dispatch(listenMessage('/scan', laserPointHandler))
-    //   })
-    //   .catch((err: any) => {
-    //     console.error('[RobotMap] subscribe topic scan error:', err)
-    //   })
-    // return () => {
-    //  dispatch(unSubscribeTopic('/scan'))
-    // }
   }
 
   useEffect(() => {
-    fetchImageData()
-      .then(subscribeTopics)
-      .catch(err => {
-        console.error('fetch Image error:', err)
-      })
+    fetchImageData().then(subscribeTopics)
+    return () => {
+      unsubscribeCarPostition()
+    }
   }, [drawingMap])
 
-  // useEffect(() => {
-  //   function updateLaserPoint() {
-  //     setTimeout(() => {
-  //       const state = store.getState()
-  //       const mapHasInit = state.draw.mapHasInit
-  //       if (mapHasInit) {
-  //         const laserPoints = state.draw.laserPoints
-  //         setDisplayLaser(laserPoints)
-  //       }
-  //       updateLaserPoint()
-  //     }, 250)
-  //   }
-  //   updateLaserPoint()
-  // }, [])
-
   return (
-    <View
-      style={{
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
-    >
-      <Canvas style={{ width, height }}>
-        <Image
-          image={viewImage}
-          fit='contain'
-          x={0}
-          y={0}
-          width={1000}
-          height={600}
-        />
-        {/* <LaserPointAtlas laserPoints={displayLaser} /> */}
-        <CarIcon carPosition={carPosition} />
-      </Canvas>
-    </View>
+    <GestureHandlerRootView style={styles.container}>
+      <View style={styles.mapContainer}>
+        <GestureDetector gesture={composedEvent}>
+          <Animated.View style={[animatedStyle]}>
+            <Canvas style={{ width, height }}>
+              <Image
+                image={viewImage}
+                fit='contain'
+                x={0}
+                y={0}
+                width={1000}
+                height={600}
+              />
+              <LaserPointAtlas laserPoints={displayLaser} />
+              <CarIcon carPosition={carPosition} />
+            </Canvas>
+          </Animated.View>
+        </GestureDetector>
+      </View>
+    </GestureHandlerRootView>
   )
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  mapContainer: { width: 1000, height: 600, overflow: 'hidden' },
+})

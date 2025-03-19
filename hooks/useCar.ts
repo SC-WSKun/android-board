@@ -10,6 +10,7 @@ import {
 } from '@/store/foxglove.trunk'
 import { BaseFootprintToMap, mapToCanvas } from '@/utils/coodinate'
 import { useTransformContext } from '@/store/transform.slice'
+import { carLog } from '@/log/logger'
 
 export type CarPosition = {
   x: number
@@ -18,6 +19,7 @@ export type CarPosition = {
 }
 
 export function useCar() {
+  // map视图下小车的原坐标（resolution = 1）
   const [carPosition, updateCarPosition] = useState<CarPosition>({
     x: 0,
     y: 0,
@@ -28,14 +30,14 @@ export function useCar() {
   /**
    * 订阅小车位置
    */
-  const subscribeCarPosition = (fn: any) => {
-    console.log('[useCar] start subscribe car position')
+  const subscribeCarPosition = () => {
+    carLog.info('start subscribe car position')
     dispatch(subscribeTopic('/tf'))
       .then((subId: number) => {
         dispatch(listenMessage('/tf', msgHandler))
       })
       .catch((err: any) => {
-        console.error('[RobotMap] subscribe topic tf error:', err)
+        carLog.error('[RobotMap] subscribe topic tf error:', err)
       })
 
     /**
@@ -61,10 +63,9 @@ export function useCar() {
           ...mapToCanvas(mapPosition.x, mapPosition.y),
           yaw: mapPosition.yaw,
         }
-        if (newPosition) {
-          updateCarPosition(newPosition)
-          fn(newPosition)
-        }
+        newPosition.x -= state.draw.userTransform.x
+        newPosition.y -= state.draw.userTransform.y
+        updateCarPosition(newPosition)
       },
       500,
     )

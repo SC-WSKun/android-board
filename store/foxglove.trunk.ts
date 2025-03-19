@@ -21,6 +21,7 @@ import {
   incrementCallServiceId,
   setConnected,
 } from './foxglove.slice'
+import { rosLog } from '@/log/logger'
 
 let client: FoxgloveClient | null = null
 
@@ -66,7 +67,7 @@ export const initClient =
       })
 
       clientInstance.on('error', e => {
-        console.error('foxgloveClient error:', e)
+        rosLog.error('foxgloveClient error:', e)
         reject('foxgloveClient init error')
       })
 
@@ -135,7 +136,7 @@ export const unSubscribeTopic =
   (topic: string) =>
   async (dispatch: AppDispatch, getState: () => RootState) => {
     if (!client) {
-      console.error('Client not initialized!')
+      rosLog.error('Client not initialized!')
       return
     }
     const subs = getState().foxglove.subs
@@ -154,12 +155,12 @@ export const publishMessage =
   async (dispatch: AppDispatch, getState: () => RootState) => {
     const advertisedChannels = getState().foxglove.advertisedChannels
     if (!client) {
-      console.error('Client not initialized!')
+      rosLog.error('Client not initialized!')
       return
     }
     const channel = _.find(advertisedChannels, { id: channelId })
     if (!channel) {
-      console.error('Channel not found!')
+      rosLog.error('Channel not found!')
       return
     }
     const parseDefinitions = parseMessageDefinition(channel.schema, {
@@ -180,13 +181,13 @@ export const callService =
   (srvName: string, payload?: { [key: string]: any }) =>
   async (dispatch: AppDispatch, getState: () => RootState) => {
     if (!client) {
-      console.error('Client not initialized!')
+      rosLog.error('Client not initialized!')
       return Promise.reject('Client not initialized!')
     }
     const services = getState().foxglove.services
     const srv: Service | undefined = _.find(services, { name: srvName })
     if (!srv) {
-      console.error('Service not found!')
+      rosLog.error('Service not found!')
       return Promise.reject('Service not found!')
     }
     const parseReqDefinitions = parseMessageDefinition(srv?.requestSchema!, {
@@ -216,9 +217,9 @@ export const callService =
             const res = reader.readMessage(response.data)
             resolve(res)
           } else {
-            console.log('response data is null')
+            rosLog.info('response data is null')
           }
-          console.log('read success')
+          rosLog.info('read success')
         } catch (err: any) {
           reject(err)
         } finally {
@@ -238,7 +239,7 @@ export const advertiseTopic =
   (channel: ClientChannelWithoutId) =>
   async (dispatch: AppDispatch, getState: () => RootState) => {
     if (!client) {
-      console.error('Client not initialized!')
+      rosLog.error('Client not initialized!')
       return
     }
     const channelId = client.advertise(channel)
@@ -260,7 +261,7 @@ export const unAdvertiseTopic =
   (channelId: number) =>
   async (dispatch: AppDispatch, getState: () => RootState) => {
     if (!client) {
-      console.error('Client not initialized!')
+      rosLog.error('Client not initialized!')
       return
     }
     // remove from advertised channels list
@@ -279,7 +280,7 @@ export const listenMessage =
   async (dispatch: AppDispatch, getState: () => RootState) => {
     const subs = getState().foxglove.subs
     if (!client) {
-      console.error('Client not initialized!')
+      rosLog.error('Client not initialized!')
       return
     }
     const msgHandler = ({
@@ -307,7 +308,7 @@ export const stopListenMessage =
   (callback: (...args: any) => void) =>
   async (dispatch: AppDispatch, getState: () => RootState) => {
     if (!client) {
-      console.error('Client not initialized!')
+      rosLog.error('Client not initialized!')
       return
     }
     client.off('message', callback)
@@ -333,6 +334,6 @@ export const readMsgWithSubId =
       const reader = new MessageReader(parseDefinitions)
       return reader.readMessage(data)
     } else {
-      console.error(`sub not found: ${subId}`)
+      rosLog.error(`sub not found: ${subId}`)
     }
   }

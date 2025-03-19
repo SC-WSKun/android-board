@@ -3,7 +3,7 @@ import { useDrawContext } from '@/store/draw.slice'
 import { callService } from '@/store/foxglove.trunk'
 import store, { AppDispatch } from '@/store/store'
 import { AlphaType, ColorType, Skia } from '@shopify/react-native-skia'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useDispatch } from 'react-redux'
 
 const VIEW_WIDTH = 1000 // canvas宽度
@@ -18,19 +18,18 @@ type ViewOrigin = {
 
 export function useMap() {
   const dispatch = useDispatch<AppDispatch>()
-  const { mapInfo, viewResolution, drawingMap, updateMapInfo } =
-    useDrawContext()
+  const { mapInfo, userTransform, drawingMap, updateMapInfo } = useDrawContext()
   const [viewOrigin, setViewOrigin] = useState<ViewOrigin>()
   const [mapData, setMapData] = useState<Uint8Array>()
 
   // 坐标计算：
-  // (originX, originY) / resolution -> (x,y)(resolution = 1)
-  // (x,y)(resolution = 1) * viewResolution -> (x,y)(resolution = viewResolution)
+  // (originX, originY) / resolution -> (x,y)[resolution = 1]
+  // (x,y)[resolution = 1] * viewResolution -> (x,y)[resolution = viewResolution]
   // 这里因为已知viewResolution的坐标，所以要进行反推
   const viewImage = useMemo(() => {
     if (!mapInfo || !mapData || !viewOrigin) return null
     const pixels = new Uint8Array(VIEW_WIDTH * VIEW_HEIGHT * 4) // 初始化像素数组
-    const scale = mapInfo.resolution / viewResolution
+    const scale = mapInfo.resolution / userTransform.resolution
 
     // 填充 pixels 数组
     for (let row = 0; row < VIEW_HEIGHT; row++) {
@@ -64,7 +63,7 @@ export function useMap() {
       VIEW_WIDTH * 4,
     )
     return img
-  }, [viewOrigin, mapInfo.resolution, viewResolution])
+  }, [viewOrigin, mapInfo.resolution, userTransform.resolution])
 
   /**
    * 拉取地图信息
@@ -83,6 +82,7 @@ export function useMap() {
       if (res?.map?.info) {
         setMapData(res.map.data)
         updateMapInfo(res.map.info) // 这里传到store是因为计算transform的时候需要用到这个信息
+        updateViewOrigin(res.map.info.origin.position)
         return Promise.resolve()
       } else {
         throw new Error('Map data is undefined')
@@ -94,21 +94,20 @@ export function useMap() {
   }
 
   /**
-   * 根据小车位置计算屏幕显示的局部区域位置
-   * @param carPosition 小车在map下的坐标
+   * 根据中心位置计算屏幕显示的局部区域位置
+   * @param centerPosition 小车在map下的坐标
    * originWidth / resolution -> standardWdith
    * standardWdith * viewResolution -> viewWidth
    */
-  const updateViewOrigin = (carPosition: { x: number; y: number }) => {
-    const { mapInfo, viewResolution } = store.getState().draw
+  const updateViewOrigin = (centerPosition: { x: number; y: number }) => {
+    const { mapInfo, userTransform } = store.getState().draw
     if (!mapInfo) return
-    const scale = mapInfo.resolution / viewResolution
+    const scale = mapInfo.resolution / userTransform.resolution
     const originWidth = VIEW_WIDTH * scale
     const originHeight = VIEW_HEIGHT * scale
 
-    // 计算视图区域，让小车保持在中心
-    const startX = Math.ceil(carPosition.x - originWidth / 2)
-    const startY = Math.ceil(carPosition.y - originHeight / 2)
+    const startX = Math.ceil(centerPosition.x - originWidth / 2)
+    const startY = Math.ceil(centerPosition.y - originHeight / 2)
     const endX = startX + originWidth
     const endY = startY + originHeight
 
@@ -117,6 +116,17 @@ export function useMap() {
       setViewOrigin({ startX, startY, endX, endY })
     }
   }
+
+  /**
+   * 拖拽触发更新视图中心
+   */
+  useEffect(() => {
+    const newOrigin = {
+      x: mapInfo.origin.position.x + userTransform.x,
+      y: mapInfo.origin.position.y + userTransform.y,
+    }
+    updateViewOrigin(newOrigin)
+  }, [mapInfo, userTransform])
 
   return {
     viewImage,

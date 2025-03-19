@@ -6,6 +6,12 @@ type NavigationView = 'label' | 'select-map' | 'navigation'
 
 type LaserPoints = any[]
 
+type UserTransform = {
+  resolution: number
+  x: number
+  y: number
+}
+
 export interface DrawState {
   mapHasInit: boolean
   currentView: NavigationView
@@ -23,7 +29,7 @@ export interface DrawState {
     }
     resolution: number
   }
-  viewResolution: number
+  userTransform: UserTransform
 }
 
 const initialState: DrawState = {
@@ -43,7 +49,11 @@ const initialState: DrawState = {
     },
     resolution: 1,
   },
-  viewResolution: 0.25,
+  userTransform: {
+    resolution: 0.25,
+    x: 0,
+    y: 0,
+  },
 }
 
 const drawSlice = createSlice({
@@ -75,8 +85,8 @@ const drawSlice = createSlice({
       state.mapInfo = action.payload
     },
 
-    updateViewResolution(state, action: PayloadAction<number>) {
-      state.viewResolution = action.payload
+    updateUserTransform(state, action: PayloadAction<UserTransform>) {
+      state.userTransform = action.payload
     },
   },
 })
@@ -87,15 +97,15 @@ export const {
   changeMap,
   updateLaserPoints,
   updateMapInfo,
-  updateViewResolution,
+  updateUserTransform,
 } = drawSlice.actions
 export default drawSlice.reducer
 
 export function useDrawContext() {
   const dispatch = useDispatch()
   const mapInfo = useSelector((state: RootState) => state.draw.mapInfo)
-  const viewResolution = useSelector(
-    (state: RootState) => state.draw.viewResolution,
+  const userTransform = useSelector(
+    (state: RootState) => state.draw.userTransform,
   )
   const laserPoints = useSelector((state: RootState) => state.draw.laserPoints)
   const mapHasInit = useSelector((state: RootState) => state.draw.mapHasInit)
@@ -104,7 +114,7 @@ export function useDrawContext() {
 
   return {
     mapInfo,
-    viewResolution,
+    userTransform,
     laserPoints,
     mapHasInit,
     currentView,
@@ -119,5 +129,7 @@ export function useDrawContext() {
       origin: { position: { x: number; y: number } }
       resolution: number
     }) => dispatch(updateMapInfo(mapInfo)),
+    updateUserTransform: (newTransform: UserTransform) =>
+      dispatch(updateUserTransform(newTransform)),
   }
 }
