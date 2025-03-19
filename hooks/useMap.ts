@@ -46,7 +46,7 @@ export function useMap() {
         pixels[i] = color
         pixels[i + 1] = color
         pixels[i + 2] = color
-        pixels[i + 3] = 236
+        pixels[i + 3] = 255
       }
     }
 

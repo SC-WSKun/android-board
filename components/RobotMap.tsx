@@ -157,7 +157,7 @@ export function RobotMap(props: IRobotMapProps) {
     <GestureHandlerRootView style={styles.container}>
       <View style={styles.mapContainer}>
         <GestureDetector gesture={composedEvent}>
-          <Animated.View style={[animatedStyle]}>
+          <Animated.View style={[animatedStyle, styles.animatedMap]}>
             <Canvas style={{ width, height }}>
               <Image
                 image={viewImage}
@@ -184,5 +184,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     overflow: 'hidden',
   },
-  mapContainer: { width: 1000, height: 600, overflow: 'hidden' },
+  mapContainer: {
+    width: 1000,
+    height: 600,
+    overflow: 'hidden',
+    backgroundColor: 'rgb(127, 127, 127)',
+  },
+  animatedMap: {
+    width: 1000,
+    height: 600,
+    backgroundColor: 'rgb(127, 127, 127)',
+  },
 })
