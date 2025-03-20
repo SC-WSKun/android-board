@@ -41,7 +41,8 @@ export function useCar() {
       })
 
     /**
-     * 处理小车Topic信息
+     * 处理小车Topic信息，更新小车定位
+     * carPosition - viewOrigin.start -> viewCar
      */
     const msgHandler = _.throttle(
       async (op: any, subscriptionId: number, timestamp: number, data: any) => {
@@ -63,8 +64,11 @@ export function useCar() {
           ...mapToCanvas(mapPosition.x, mapPosition.y),
           yaw: mapPosition.yaw,
         }
-        newPosition.x -= state.draw.userTransform.x
-        newPosition.y -= state.draw.userTransform.y
+        const scale = state.draw.mapInfo.resolution / state.draw.userTransform.resolution
+        if (scale !== 1) {
+          newPosition.x *= scale
+          newPosition.y *= scale
+        }
         updateCarPosition(newPosition)
       },
       500,

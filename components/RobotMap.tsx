@@ -37,8 +37,9 @@ export function RobotMap(props: IRobotMapProps) {
   const width = 1000 // canvas宽度
   const height = 600 // canvas高度
   const dispatch = useDispatch<AppDispatch>()
-  const { mapInfo, drawingMap, userTransform, updateUserTransform } = useDrawContext()
-  const { viewImage, fetchImageData } = useMap()
+  const { mapInfo, drawingMap, userTransform, updateUserTransform } =
+    useDrawContext()
+  const { viewOrigin, viewImage, fetchImageData } = useMap()
   const { carPosition, subscribeCarPosition, unsubscribeCarPostition } =
     useCar()
   const { displayLaser } = useLaser()
@@ -168,7 +169,13 @@ export function RobotMap(props: IRobotMapProps) {
                 height={600}
               />
               <LaserPointAtlas laserPoints={displayLaser} />
-              <CarIcon carPosition={carPosition} />
+              <CarIcon
+                carPosition={{
+                  x: carPosition.x - viewOrigin.startX,
+                  y: carPosition.y - viewOrigin.startY,
+                  yaw: carPosition.yaw,
+                }}
+              />
             </Canvas>
           </Animated.View>
         </GestureDetector>

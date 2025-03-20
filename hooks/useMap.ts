@@ -19,7 +19,12 @@ type ViewOrigin = {
 export function useMap() {
   const dispatch = useDispatch<AppDispatch>()
   const { mapInfo, userTransform, drawingMap, updateMapInfo } = useDrawContext()
-  const [viewOrigin, setViewOrigin] = useState<ViewOrigin>()
+  const [viewOrigin, setViewOrigin] = useState<ViewOrigin>({
+    startX: 0,
+    startY: 0,
+    endX: 1000,
+    endY: 600,
+  })
   const [mapData, setMapData] = useState<Uint8Array>()
 
   // 坐标计算：
@@ -129,6 +134,7 @@ export function useMap() {
   }, [mapInfo, userTransform])
 
   return {
+    viewOrigin,
     viewImage,
     fetchImageData,
     updateViewOrigin,
