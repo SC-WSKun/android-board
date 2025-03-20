@@ -28,26 +28,43 @@ export function useMap() {
   const [mapData, setMapData] = useState<Uint8Array>()
 
   // 坐标计算：
-  // (originX, originY) / resolution -> (x,y)[resolution = 1]
-  // (x,y)[resolution = 1] * viewResolution -> (x,y)[resolution = viewResolution]
+  // (originX, originY) * resolution -> (x,y)[resolution = 1]
+  // (x,y)[resolution = 1] / viewResolution -> (x,y)[resolution = viewResolution]
   // 这里因为已知viewResolution的坐标，所以要进行反推
   const viewImage = useMemo(() => {
     if (!mapInfo || !mapData || !viewOrigin) return null
     const pixels = new Uint8Array(VIEW_WIDTH * VIEW_HEIGHT * 4) // 初始化像素数组
-    const scale = mapInfo.resolution / userTransform.resolution
+    const scale = userTransform.resolution / mapInfo.resolution
 
     // 填充 pixels 数组
     for (let row = 0; row < VIEW_HEIGHT; row++) {
       for (let col = 0; col < VIEW_WIDTH; col++) {
-        const targetCol = Math.ceil(col * scale) + viewOrigin.startX
-        const targetRow = Math.ceil(row * scale) + viewOrigin.startY
+        // targetCol 和 targetRow 转换到了原始map的resolution下的坐标
+        const targetCol = Math.ceil((col + viewOrigin.startX) * scale)
+        const targetRow = Math.ceil((row + viewOrigin.startY) * scale)
+
+        // 如果超出边界，则填充为灰色
+        if (
+          targetCol < 0 ||
+          targetRow < 0 ||
+          targetCol >= mapInfo?.width ||
+          targetRow >= mapInfo?.height
+        ) {
+          const i = (col + row * VIEW_WIDTH) * 4
+          const color = 127
+          pixels[i] = color
+          pixels[i + 1] = color
+          pixels[i + 2] = color
+          pixels[i + 3] = 255
+          continue
+        }
+
+        // 从mapData中获取值
         const mapI =
           targetCol + (mapInfo?.height - 1 - targetRow) * mapInfo?.width
         const val = mapData[mapI]
         const i = (col + row * VIEW_WIDTH) * 4
-
-        // 设置 RGBA 值
-        const color = val === 100 ? 0 : val === 0 ? 236 : 127
+        const color = val === 100 ? 0 : 236
         pixels[i] = color
         pixels[i + 1] = color
         pixels[i + 2] = color
@@ -105,16 +122,13 @@ export function useMap() {
    * standardWdith * viewResolution -> viewWidth
    */
   const updateViewOrigin = (centerPosition: { x: number; y: number }) => {
-    const { mapInfo, userTransform } = store.getState().draw
+    const { mapInfo } = store.getState().draw
     if (!mapInfo) return
-    const scale = mapInfo.resolution / userTransform.resolution
-    const originWidth = VIEW_WIDTH * scale
-    const originHeight = VIEW_HEIGHT * scale
 
-    const startX = Math.ceil(centerPosition.x - originWidth / 2)
-    const startY = Math.ceil(centerPosition.y - originHeight / 2)
-    const endX = startX + originWidth
-    const endY = startY + originHeight
+    const startX = centerPosition.x - VIEW_WIDTH / 2
+    const startY = centerPosition.y - VIEW_HEIGHT / 2
+    const endX = startX + VIEW_WIDTH
+    const endY = startY + VIEW_HEIGHT
 
     // 仅在位置发生变化时更新状态
     if (startX !== viewOrigin?.startX || startY !== viewOrigin.startY) {
@@ -124,11 +138,13 @@ export function useMap() {
 
   /**
    * 拖拽触发更新视图中心
+   * newOrigin: view center point in userScale
    */
   useEffect(() => {
+    const scale = mapInfo.resolution / userTransform.resolution
     const newOrigin = {
-      x: mapInfo.origin.position.x + userTransform.x,
-      y: mapInfo.origin.position.y + userTransform.y,
+      x: mapInfo.origin.position.x * scale + userTransform.x,
+      y: mapInfo.origin.position.y * scale + userTransform.y,
     }
     updateViewOrigin(newOrigin)
   }, [mapInfo, userTransform])

@@ -42,7 +42,7 @@ export function useCar() {
 
     /**
      * 处理小车Topic信息，更新小车定位
-     * carPosition - viewOrigin.start -> viewCar
+     * carPositionInMap * mapInfo.resolution / userTransform.resolution -> carPositionInView
      */
     const msgHandler = _.throttle(
       async (op: any, subscriptionId: number, timestamp: number, data: any) => {

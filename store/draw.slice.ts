@@ -50,7 +50,7 @@ const initialState: DrawState = {
     resolution: 1,
   },
   userTransform: {
-    resolution: 0.25,
+    resolution: 0.0125,
     x: 0,
     y: 0,
   },
