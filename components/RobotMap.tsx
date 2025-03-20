@@ -37,7 +37,7 @@ export function RobotMap(props: IRobotMapProps) {
   const width = 1000 // canvas宽度
   const height = 600 // canvas高度
   const dispatch = useDispatch<AppDispatch>()
-  const { drawingMap, userTransform, updateUserTransform } = useDrawContext()
+  const { mapInfo, drawingMap, userTransform, updateUserTransform } = useDrawContext()
   const { viewImage, fetchImageData } = useMap()
   const { carPosition, subscribeCarPosition, unsubscribeCarPostition } =
     useCar()
@@ -63,10 +63,10 @@ export function RobotMap(props: IRobotMapProps) {
     .onEnd(() => {
       // 这里必须用runOnJS来调用updateUserTransform，因为GestureDetector运行在Reanimated线程，而redux的状态更新在JS线程。
       // 如果不使用runOnJS，RN会崩溃。
-      // todo: 这个位移需要做一下scale适配，不然很难看
+      const scale = mapInfo.resolution / userTransform.resolution
       runOnJS(updateUserTransform)({
-        x: userTransform.x - translateX.value,
-        y: userTransform.y - translateY.value,
+        x: userTransform.x - translateX.value * scale,
+        y: userTransform.y - translateY.value * scale,
         resolution: userTransform.resolution,
       })
       // 重置canvas位置
