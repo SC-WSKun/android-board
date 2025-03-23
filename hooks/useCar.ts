@@ -3,6 +3,7 @@ import _ from 'lodash'
 import { useDispatch } from 'react-redux'
 import store, { AppDispatch } from '@/store/store'
 import {
+  callService,
   listenMessage,
   readMsgWithSubId,
   subscribeTopic,
@@ -11,6 +12,7 @@ import {
 import { BaseFootprintToMap, mapToCanvas } from '@/utils/coodinate'
 import { useTransformContext } from '@/store/transform.slice'
 import { carLog } from '@/log/logger'
+import { useDrawContext } from '@/store/draw.slice'
 
 export type CarPosition = {
   x: number
@@ -25,6 +27,7 @@ export function useCar() {
     y: 0,
     yaw: 0,
   })
+  const { mapInfo, userTransform } = useDrawContext()
   const { updateTransform } = useTransformContext()
   const dispatch = useDispatch<AppDispatch>()
   /**
@@ -64,11 +67,6 @@ export function useCar() {
           ...mapToCanvas(mapPosition.x, mapPosition.y),
           yaw: mapPosition.yaw,
         }
-        const scale = state.draw.mapInfo.resolution / state.draw.userTransform.resolution
-        if (scale !== 1) {
-          newPosition.x *= scale
-          newPosition.y *= scale
-        }
         updateCarPosition(newPosition)
       },
       500,
@@ -80,6 +78,32 @@ export function useCar() {
    */
   const unsubscribeCarPostition = () => {
     dispatch(unSubscribeTopic('/tf'))
+  }
+
+  /**
+   * 重定位小车
+   */
+  const resetCarPosition = (map_name: string, newTransform: Transform) => {
+    const scale = userTransform.resolution / mapInfo.resolution
+    const originTransform: Transform = {
+      ...newTransform,
+      translation: {
+        x: newTransform.translation.x * scale,
+        y: newTransform.translation.y * scale,
+        z: newTransform.translation.z,
+      },
+    }
+    carLog.info(
+      `reset car position to (${originTransform.translation.x}, ${originTransform.translation.y})`,
+    )
+    dispatch(
+      callService('/tiered_nav_state_machine/load_map', {
+        p: {
+          map_name,
+          t: originTransform,
+        },
+      }),
+    )
   }
 
   const updateTransforms = (
@@ -98,5 +122,6 @@ export function useCar() {
     carPosition,
     subscribeCarPosition,
     unsubscribeCarPostition,
+    resetCarPosition,
   }
 }

@@ -219,7 +219,6 @@ export const callService =
           } else {
             rosLog.info('response data is null')
           }
-          rosLog.info('read success')
         } catch (err: any) {
           reject(err)
         } finally {

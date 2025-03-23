@@ -16,7 +16,7 @@ import { useCar } from '@/hooks/useCar'
 import { CarIcon } from './CarIcon'
 import { useMap } from '@/hooks/useMap'
 import { useLaser } from '@/hooks/useLaser'
-import { rosLog } from '@/log/logger'
+import { carLog, rosLog } from '@/log/logger'
 import {
   GestureHandlerRootView,
   GestureDetector,
@@ -40,8 +40,12 @@ export function RobotMap(props: IRobotMapProps) {
   const { mapInfo, drawingMap, userTransform, updateUserTransform } =
     useDrawContext()
   const { viewOrigin, viewImage, fetchImageData } = useMap()
-  const { carPosition, subscribeCarPosition, unsubscribeCarPostition } =
-    useCar()
+  const {
+    carPosition,
+    subscribeCarPosition,
+    unsubscribeCarPostition,
+    resetCarPosition,
+  } = useCar()
   const { displayLaser } = useLaser()
   const { updateTransform } = useTransformContext()
 
@@ -77,7 +81,8 @@ export function RobotMap(props: IRobotMapProps) {
 
   const tapGesture = Gesture.Tap().onEnd((_event, success) => {
     if (success) {
-      console.log('single tap!')
+      //todo: 这里runOnJS还是会崩溃
+      runOnJS(resetPosition)()
     }
   })
 
@@ -145,6 +150,23 @@ export function RobotMap(props: IRobotMapProps) {
       .catch((err: any) => {
         rosLog.error('subscribe topic tf_static error:', err)
       })
+  }
+
+  /**
+   * 重置小车位置
+   */
+  const resetPosition = () => {
+    // todo: 绑定触摸事件，计算距离右上角偏移量
+    const offsetX = 700
+    const offsetY = 400
+    resetCarPosition(drawingMap?.map_name || '', {
+      translation: {
+        x: offsetX + viewOrigin.startX,
+        y: offsetY + viewOrigin.startY,
+        z: 0,
+      },
+      rotation: { x: 0, y: 0, z: 0, w: 1 },
+    })
   }
 
   useEffect(() => {

@@ -21,13 +21,16 @@ export const mapToCanvas = (
   worldX: number,
   worldY: number,
 ): { x: number; y: number } => {
-  const { mapInfo, scale } = store.getState().draw
-  const { resolution } = mapInfo
-  const { x: originX, y: originY } = mapInfo.origin.position
+  const {
+    mapInfo: { resolution, origin },
+    userTransform,
+  } = store.getState().draw
+  const { x: originX, y: originY } = origin.position
+  const scale = resolution / userTransform.resolution
 
   return {
-    x: (worldX - originX) / (scale * resolution),
-    y: (worldY - originY) / (scale * resolution),
+    x: (worldX - originX) * scale,
+    y: (worldY - originY) * scale,
   }
 }
 

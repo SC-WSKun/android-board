@@ -17,7 +17,6 @@ export interface DrawState {
   currentView: NavigationView
   drawingMap: RobotMap | undefined
   laserPoints: LaserPoints
-  scale: number
   mapInfo: {
     width: number
     height: number
@@ -37,7 +36,6 @@ const initialState: DrawState = {
   currentView: 'select-map',
   drawingMap: undefined,
   laserPoints: [],
-  scale: 1,
   mapInfo: {
     width: 1000,
     height: 600,
