@@ -38,5 +38,9 @@
 
    callService调用的时候需要注意service的异步更新导致的error。特别注意switch_mode和其它service一起调用。
 
+2. **通过GestureDetector来管理触控事件时，运行回调函数奔溃**
+
+   `GestureDetector`触发事件的回调函数运行在UI线程中，如果回调函数中需要更新数据，需要注意尽量使用`useSharedValue`来保存变量。否则需要用`runOnJS`包裹函数，在JS线程中运行
+
 ## 资源链接
 1. [腾讯云Deepseek API](https://cloud.tencent.com/document/product/1772/115963)
