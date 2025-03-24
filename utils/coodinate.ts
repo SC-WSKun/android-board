@@ -1,36 +1,44 @@
+import { CANVAS_HEIGHT, CANVAS_WIDTH } from '@/components/RobotMap'
 import store from '@/store/store'
 
-// 像素坐标转真实世界坐标
-export const pixelToWorldCoordinate = (
+// 像素坐标转地图坐标
+export const canvasToMap = (
   pixelOffsetX: number,
   pixelOffsetY: number,
-  scale: number,
-  resolution: number,
-  originX: number,
-  originY: number,
-  gridHeight: number,
+  startX: number,
+  startY: number,
 ): { x: number; y: number } => {
+  const {
+    mapInfo: { resolution },
+    userTransform,
+  } = store.getState().draw
+  const scale = userTransform.resolution / resolution
   return {
-    x: pixelOffsetX * scale * resolution + originX,
-    y: (gridHeight - pixelOffsetY * scale) * resolution + originY,
+    x: (pixelOffsetX + startX) * scale,
+    y: (pixelOffsetY + startY) * scale,
   }
 }
 
-// map坐标转Canvas坐标
+// 小车坐标转Canvas坐标
 export const mapToCanvas = (
-  worldX: number,
-  worldY: number,
+  mapX: number,
+  mapY: number,
 ): { x: number; y: number } => {
   const {
     mapInfo: { resolution, origin },
+    centerPoint, // Canvas中心点对应的地图坐标,经过userResolution变换过了
     userTransform,
   } = store.getState().draw
-  const { x: originX, y: originY } = origin.position
   const scale = resolution / userTransform.resolution
-
+  // 小车坐标转到地图坐标系
+  const worldX = (mapX - origin.position.x) * scale
+  const worldY = CANVAS_HEIGHT - (mapY - origin.position.y) * scale
+  // 地图坐标系转到当前视图位置
+  const currentX = worldX + CANVAS_WIDTH / 2 - centerPoint.x
+  const currentY = worldY + CANVAS_HEIGHT / 2 - centerPoint.y
   return {
-    x: (worldX - originX) * scale,
-    y: (worldY - originY) * scale,
+    x: currentX,
+    y: currentY,
   }
 }
 

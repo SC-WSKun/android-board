@@ -17,6 +17,11 @@ export interface DrawState {
   currentView: NavigationView
   drawingMap: RobotMap | undefined
   laserPoints: LaserPoints
+  // 中心点map坐标
+  centerPoint: {
+    x: number
+    y: number
+  }
   mapInfo: {
     width: number
     height: number
@@ -36,6 +41,10 @@ const initialState: DrawState = {
   currentView: 'select-map',
   drawingMap: undefined,
   laserPoints: [],
+  centerPoint: {
+    x: 0,
+    y: 0,
+  },
   mapInfo: {
     width: 1000,
     height: 600,
@@ -70,7 +79,6 @@ const drawSlice = createSlice({
     updateLaserPoints(state, action: PayloadAction<LaserPoints>) {
       state.laserPoints = action.payload
     },
-
     updateMapInfo(
       state,
       action: PayloadAction<{
@@ -82,9 +90,11 @@ const drawSlice = createSlice({
     ) {
       state.mapInfo = action.payload
     },
-
     updateUserTransform(state, action: PayloadAction<UserTransform>) {
       state.userTransform = action.payload
+    },
+    updateCenterPoint(state, action: PayloadAction<{ x: number; y: number }>) {
+      state.centerPoint = action.payload
     },
   },
 })
@@ -96,6 +106,7 @@ export const {
   updateLaserPoints,
   updateMapInfo,
   updateUserTransform,
+  updateCenterPoint,
 } = drawSlice.actions
 export default drawSlice.reducer
 
@@ -105,6 +116,7 @@ export function useDrawContext() {
   const userTransform = useSelector(
     (state: RootState) => state.draw.userTransform,
   )
+  const centerPoint = useSelector((state: RootState) => state.draw.centerPoint)
   const laserPoints = useSelector((state: RootState) => state.draw.laserPoints)
   const mapHasInit = useSelector((state: RootState) => state.draw.mapHasInit)
   const currentView = useSelector((state: RootState) => state.draw.currentView)
@@ -114,6 +126,7 @@ export function useDrawContext() {
     mapInfo,
     userTransform,
     laserPoints,
+    centerPoint,
     mapHasInit,
     currentView,
     drawingMap,
@@ -129,5 +142,7 @@ export function useDrawContext() {
     }) => dispatch(updateMapInfo(mapInfo)),
     updateUserTransform: (newTransform: UserTransform) =>
       dispatch(updateUserTransform(newTransform)),
+    updateCenterPoint: (newcenterPoint: { x: number; y: number }) =>
+      dispatch(updateCenterPoint(newcenterPoint)),
   }
 }

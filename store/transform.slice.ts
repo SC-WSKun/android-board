@@ -1,7 +1,14 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 import { useDispatch, useSelector } from 'react-redux'
-import { RootState } from './store'
+import { AppDispatch, RootState } from './store'
 import { TRANSFORM_MAP } from '@/constants/TransformMap'
+import { rosLog } from '@/log/logger'
+import {
+  listenMessage,
+  readMsgWithSubId,
+  subscribeTopic,
+  unSubscribeTopic,
+} from './foxglove.trunk'
 
 export type TransformState = {
   odomToMap: Transform | null
@@ -45,7 +52,7 @@ export const { updateTransform } = transformSlice.actions
 export default transformSlice.reducer
 
 export function useTransformContext() {
-  const dispatch = useDispatch()
+  const dispatch = useDispatch<AppDispatch>()
   const odomToMap = useSelector((state: RootState) => state.transform.odomToMap)
   const baseFootprintToOdom = useSelector(
     (state: RootState) => state.transform.baseFootprintToOdom,
@@ -60,6 +67,58 @@ export function useTransformContext() {
     (state: RootState) => state.transform.laserLinkToBaseLink,
   )
 
+  /**
+   * 更新坐标变换矩阵
+   * @param transforms
+   */
+  const updateTransforms = (
+    transforms: {
+      transform: Transform
+      child_frame_id: string
+      [key: string]: any
+    }[],
+  ) => {
+    transforms?.forEach(transform => {
+      console.log('updateTransform:', transform.transform)
+      dispatch(
+        updateTransform({
+          transformType: transform.child_frame_id,
+          value: transform.transform,
+        }),
+      )
+    })
+  }
+
+  /**
+   * 处理tf_static的信息
+   */
+  const tfStaticHandler = async (
+    op: any,
+    subscriptionId: number,
+    timestamp: number,
+    data: any,
+  ) => {
+    const parseData: any = await dispatch(
+      readMsgWithSubId(subscriptionId, data),
+    )
+    //todo: transform is null
+    updateTransforms(parseData.transforms)
+  }
+
+  const subscribeTransforms = () => {
+    dispatch(subscribeTopic('/tf_static'))
+      .then((res: any) => {
+        dispatch(listenMessage('/tf_static', tfStaticHandler))
+      })
+      .catch((err: any) => {
+        rosLog.error('subscribe topic tf_static error:', err)
+      })
+  }
+
+  const unsubscribeTransforms = () => {
+    dispatch(unSubscribeTopic('/tf_static'))
+  }
+
   return {
     odomToMap,
     baseFootprintToOdom,
@@ -68,5 +127,7 @@ export function useTransformContext() {
     laserLinkToBaseLink,
     updateTransform: (transformType: string, value: Transform) =>
       dispatch(updateTransform({ transformType, value })),
+    subscribeTransforms,
+    unsubscribeTransforms,
   }
 }

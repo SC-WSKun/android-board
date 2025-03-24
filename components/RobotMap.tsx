@@ -1,22 +1,15 @@
-import { useEffect, useMemo } from 'react'
-import { Button, View, StyleSheet } from 'react-native'
+import { useEffect } from 'react'
+import { View, StyleSheet } from 'react-native'
 import { Canvas, Image } from '@shopify/react-native-skia'
 import LaserPointAtlas from './LaserPointAtlas'
 import { useDrawContext } from '@/store/draw.slice'
 import { useDispatch } from 'react-redux'
 import { AppDispatch } from '@/store/store'
-import {
-  callService,
-  listenMessage,
-  readMsgWithSubId,
-  subscribeTopic,
-} from '@/store/foxglove.trunk'
-import { useTransformContext } from '@/store/transform.slice'
+import { callService } from '@/store/foxglove.trunk'
 import { useCar } from '@/hooks/useCar'
 import { CarIcon } from './CarIcon'
 import { useMap } from '@/hooks/useMap'
 import { useLaser } from '@/hooks/useLaser'
-import { carLog, rosLog } from '@/log/logger'
 import {
   GestureHandlerRootView,
   GestureDetector,
@@ -25,32 +18,37 @@ import {
 import Animated, {
   runOnJS,
   useAnimatedStyle,
+  useDerivedValue,
   useSharedValue,
 } from 'react-native-reanimated'
+import { useTransformContext } from '@/store/transform.slice'
+import { mapToCanvas } from '@/utils/coodinate'
 
 interface IRobotMapProps {
   plugins: string[]
 }
 
+export const CANVAS_WIDTH = 1000
+export const CANVAS_HEIGHT = 600
+
 export function RobotMap(props: IRobotMapProps) {
   const { plugins } = props
-  const width = 1000 // canvas宽度
-  const height = 600 // canvas高度
   const dispatch = useDispatch<AppDispatch>()
   const { mapInfo, drawingMap, userTransform, updateUserTransform } =
     useDrawContext()
-  const { viewOrigin, viewImage, fetchImageData } = useMap()
+  const { viewRect, viewImage, fetchImageData } = useMap()
   const {
     carPosition,
     subscribeCarPosition,
     unsubscribeCarPostition,
     resetCarPosition,
   } = useCar()
+  const { subscribeTransforms, unsubscribeTransforms } = useTransformContext()
   const { displayLaser } = useLaser()
-  const { updateTransform } = useTransformContext()
 
   const translateX = useSharedValue(0)
   const translateY = useSharedValue(0)
+  const tapPosition = useSharedValue<{ x: number; y: number } | null>(null)
 
   /**
    * 用户拖拽事件
@@ -79,10 +77,31 @@ export function RobotMap(props: IRobotMapProps) {
       translateY.value = 0
     })
 
+  /**
+   * 用户点击事件
+   */
   const tapGesture = Gesture.Tap().onEnd((_event, success) => {
     if (success) {
-      //todo: 这里runOnJS还是会崩溃
-      runOnJS(resetPosition)()
+      tapPosition.value = { x: _event.x, y: _event.y }
+    }
+  })
+
+  /**
+   * 点击事件触发更新
+   * 因为更新涉及状态，所以不能在点击事件中直接runOnJS，需要在reanimated线程中调用
+   * 这里参数不能带redux的状态，会崩掉
+   */
+  useDerivedValue(() => {
+    if (tapPosition.value) {
+      runOnJS(resetCarPosition)(drawingMap?.map_name || '', {
+        translation: {
+          x: tapPosition.value.x + viewRect.startX,
+          y: tapPosition.value.y + viewRect.startY,
+          z: 0,
+        },
+        rotation: { x: 0, y: 0, z: 0, w: 1 },
+      })
+      tapPosition.value = null // 重置
     }
   })
 
@@ -99,80 +118,24 @@ export function RobotMap(props: IRobotMapProps) {
   }))
 
   /**
-   * 更新坐标变换矩阵
-   * @param transforms
-   */
-  const updateTransforms = (
-    transforms: {
-      transform: Transform
-      child_frame_id: string
-      [key: string]: any
-    }[],
-  ) => {
-    transforms?.forEach(transform => {
-      updateTransform(transform.child_frame_id, transform.transform)
-    })
-  }
-
-  /**
-   * 处理tf_static的信息
-   */
-  const tfStaticHandler = async (
-    op: any,
-    subscriptionId: number,
-    timestamp: number,
-    data: any,
-  ) => {
-    const parseData: any = await dispatch(
-      readMsgWithSubId(subscriptionId, data),
-    )
-    updateTransforms(parseData.transforms)
-  }
-
-  /**
-   * 订阅必须topic
+   * 订阅必须topic，卸载组件时取消订阅
    * tf: 更新baseFootprintToOdom,leftWheelToBaseLink,rightWheelToBaseLink,odomToMap(导航模式下)
    * tf_static: 更新laserLinkToBaseLink, baseLinkToBaseFootprint
    */
-  const subscribeTopics = () => {
-    // 切换到导航模式
-    dispatch(
-      callService('/tiered_nav_state_machine/switch_mode', {
-        mode: 2,
-      }),
-    )
-    // 更新小车定位，这里传入updateViewOrigin是为了让窗口跟随小车移动
-    subscribeCarPosition()
-    dispatch(subscribeTopic('/tf_static'))
-      .then((res: any) => {
-        dispatch(listenMessage('/tf_static', tfStaticHandler))
-      })
-      .catch((err: any) => {
-        rosLog.error('subscribe topic tf_static error:', err)
-      })
-  }
-
-  /**
-   * 重置小车位置
-   */
-  const resetPosition = () => {
-    // todo: 绑定触摸事件，计算距离右上角偏移量
-    const offsetX = 700
-    const offsetY = 400
-    resetCarPosition(drawingMap?.map_name || '', {
-      translation: {
-        x: offsetX + viewOrigin.startX,
-        y: offsetY + viewOrigin.startY,
-        z: 0,
-      },
-      rotation: { x: 0, y: 0, z: 0, w: 1 },
-    })
-  }
-
   useEffect(() => {
-    fetchImageData().then(subscribeTopics)
+    fetchImageData().then(() => {
+      // 切换到导航模式
+      dispatch(
+        callService('/tiered_nav_state_machine/switch_mode', {
+          mode: 2,
+        }),
+      )
+      subscribeCarPosition()
+      subscribeTransforms()
+    })
     return () => {
       unsubscribeCarPostition()
+      unsubscribeTransforms()
     }
   }, [drawingMap])
 
@@ -181,7 +144,8 @@ export function RobotMap(props: IRobotMapProps) {
       <View style={styles.mapContainer}>
         <GestureDetector gesture={composedEvent}>
           <Animated.View style={[animatedStyle, styles.animatedMap]}>
-            <Canvas style={{ width, height }}>
+            <Canvas style={{ width: CANVAS_WIDTH, height: CANVAS_HEIGHT }}>
+              {/* 地图 */}
               <Image
                 image={viewImage}
                 fit='contain'
@@ -190,11 +154,12 @@ export function RobotMap(props: IRobotMapProps) {
                 width={1000}
                 height={600}
               />
+              {/* 激光点云 */}
               <LaserPointAtlas laserPoints={displayLaser} />
+              {/* 小车 */}
               <CarIcon
                 carPosition={{
-                  x: carPosition.x - viewOrigin.startX,
-                  y: carPosition.y - viewOrigin.startY,
+                  ...mapToCanvas(carPosition.x, carPosition.y),
                   yaw: carPosition.yaw,
                 }}
               />

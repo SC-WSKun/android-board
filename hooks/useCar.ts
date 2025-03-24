@@ -9,10 +9,11 @@ import {
   subscribeTopic,
   unSubscribeTopic,
 } from '@/store/foxglove.trunk'
-import { BaseFootprintToMap, mapToCanvas } from '@/utils/coodinate'
+import { BaseFootprintToMap } from '@/utils/coodinate'
 import { useTransformContext } from '@/store/transform.slice'
 import { carLog } from '@/log/logger'
 import { useDrawContext } from '@/store/draw.slice'
+import { CANVAS_HEIGHT } from '@/components/RobotMap'
 
 export type CarPosition = {
   x: number
@@ -63,11 +64,7 @@ export function useCar() {
         const baseFootprintToOdom = state.transform.baseFootprintToOdom
         const mapPosition = BaseFootprintToMap(odomToMap, baseFootprintToOdom)
         if (!mapPosition) return
-        const newPosition = {
-          ...mapToCanvas(mapPosition.x, mapPosition.y),
-          yaw: mapPosition.yaw,
-        }
-        updateCarPosition(newPosition)
+        updateCarPosition(mapPosition)
       },
       500,
     )
@@ -85,22 +82,21 @@ export function useCar() {
    */
   const resetCarPosition = (map_name: string, newTransform: Transform) => {
     const scale = userTransform.resolution / mapInfo.resolution
-    const originTransform: Transform = {
+    const scaleTransform = {
       ...newTransform,
       translation: {
         x: newTransform.translation.x * scale,
         y: newTransform.translation.y * scale,
-        z: newTransform.translation.z,
       },
     }
     carLog.info(
-      `reset car position to (${originTransform.translation.x}, ${originTransform.translation.y})`,
+      `reset car position to (${scaleTransform.translation.x}, ${scaleTransform.translation.y})`,
     )
     dispatch(
       callService('/tiered_nav_state_machine/load_map', {
         p: {
           map_name,
-          t: originTransform,
+          t: scaleTransform,
         },
       }),
     )
