@@ -10,7 +10,7 @@ import { useEffect } from 'react'
 import 'react-native-reanimated'
 import { Provider } from 'react-redux'
 import store from '@/store/store'
-
+import Toast from 'react-native-toast-message'
 import { useColorScheme } from '@/hooks/useColorScheme'
 
 const ROUTER_MAP = {
@@ -58,28 +58,31 @@ export default function RootLayout() {
   }
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Provider store={store}>
-        <Stack>
-          <Stack.Screen
-            name={ROUTER_MAP.HOME}
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen
-            name={ROUTER_MAP.PATROL}
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen
-            name={ROUTER_MAP.NAVIGATION}
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen
-            name={ROUTER_MAP.SETTING}
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen name={ROUTER_MAP.NOT_FOUND} />
-        </Stack>
-      </Provider>
-    </ThemeProvider>
+    <>
+      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        <Provider store={store}>
+          <Stack>
+            <Stack.Screen
+              name={ROUTER_MAP.HOME}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name={ROUTER_MAP.PATROL}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name={ROUTER_MAP.NAVIGATION}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name={ROUTER_MAP.SETTING}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen name={ROUTER_MAP.NOT_FOUND} />
+          </Stack>
+        </Provider>
+      </ThemeProvider>
+      <Toast />
+    </>
   )
 }
