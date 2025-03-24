@@ -79,7 +79,6 @@ export function useTransformContext() {
     }[],
   ) => {
     transforms?.forEach(transform => {
-      console.log('updateTransform:', transform.transform)
       dispatch(
         updateTransform({
           transformType: transform.child_frame_id,

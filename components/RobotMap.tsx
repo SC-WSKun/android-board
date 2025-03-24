@@ -66,10 +66,9 @@ export function RobotMap(props: IRobotMapProps) {
     .onEnd(() => {
       // 这里必须用runOnJS来调用updateUserTransform，因为GestureDetector运行在Reanimated线程，而redux的状态更新在JS线程。
       // 如果不使用runOnJS，RN会崩溃。
-      const scale = mapInfo.resolution / userTransform.resolution
       runOnJS(updateUserTransform)({
-        x: userTransform.x - translateX.value * scale,
-        y: userTransform.y - translateY.value * scale,
+        x: userTransform.x - translateX.value,
+        y: userTransform.y - translateY.value,
         resolution: userTransform.resolution,
       })
       // 重置canvas位置
@@ -79,6 +78,7 @@ export function RobotMap(props: IRobotMapProps) {
 
   /**
    * 用户点击事件
+   * 这里拿到的坐标是canvas坐标，需要后续转换成map坐标
    */
   const tapGesture = Gesture.Tap().onEnd((_event, success) => {
     if (success) {
@@ -93,10 +93,20 @@ export function RobotMap(props: IRobotMapProps) {
    */
   useDerivedValue(() => {
     if (tapPosition.value) {
+      // tapPosition.value + viewRect.start 得到的是用户缩放后的地图坐标，这里需要转成map坐标
       runOnJS(resetCarPosition)(drawingMap?.map_name || '', {
         translation: {
-          x: tapPosition.value.x + viewRect.startX,
-          y: tapPosition.value.y + viewRect.startY,
+          x:
+            ((tapPosition.value.x + viewRect.startX) *
+              userTransform.resolution) /
+              mapInfo.resolution +
+            mapInfo.origin.position.x,
+          y:
+            mapInfo.height -
+            ((tapPosition.value.y + viewRect.startY) *
+              userTransform.resolution) /
+              mapInfo.resolution +
+            mapInfo.origin.position.y,
           z: 0,
         },
         rotation: { x: 0, y: 0, z: 0, w: 1 },

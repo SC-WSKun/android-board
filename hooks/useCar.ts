@@ -22,13 +22,12 @@ export type CarPosition = {
 }
 
 export function useCar() {
-  // map视图下小车的原坐标（resolution = 1）
+  // map视图下小车的原坐标
   const [carPosition, updateCarPosition] = useState<CarPosition>({
     x: 0,
     y: 0,
     yaw: 0,
   })
-  const { mapInfo, userTransform } = useDrawContext()
   const { updateTransform } = useTransformContext()
   const dispatch = useDispatch<AppDispatch>()
   /**
@@ -81,22 +80,14 @@ export function useCar() {
    * 重定位小车
    */
   const resetCarPosition = (map_name: string, newTransform: Transform) => {
-    const scale = userTransform.resolution / mapInfo.resolution
-    const scaleTransform = {
-      ...newTransform,
-      translation: {
-        x: newTransform.translation.x * scale,
-        y: newTransform.translation.y * scale,
-      },
-    }
     carLog.info(
-      `reset car position to (${scaleTransform.translation.x}, ${scaleTransform.translation.y})`,
+      `reset car position to (${newTransform.translation.x}, ${newTransform.translation.y})`,
     )
     dispatch(
       callService('/tiered_nav_state_machine/load_map', {
         p: {
           map_name,
-          t: scaleTransform,
+          t: newTransform,
         },
       }),
     )

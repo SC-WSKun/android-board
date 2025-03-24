@@ -25,14 +25,14 @@ export const mapToCanvas = (
   mapY: number,
 ): { x: number; y: number } => {
   const {
-    mapInfo: { resolution, origin },
+    mapInfo: { height, resolution, origin },
     centerPoint, // Canvas中心点对应的地图坐标,经过userResolution变换过了
     userTransform,
   } = store.getState().draw
   const scale = resolution / userTransform.resolution
   // 小车坐标转到地图坐标系
   const worldX = (mapX - origin.position.x) * scale
-  const worldY = CANVAS_HEIGHT - (mapY - origin.position.y) * scale
+  const worldY = (height - (mapY - origin.position.y)) * scale
   // 地图坐标系转到当前视图位置
   const currentX = worldX + CANVAS_WIDTH / 2 - centerPoint.x
   const currentY = worldY + CANVAS_HEIGHT / 2 - centerPoint.y

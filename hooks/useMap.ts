@@ -33,9 +33,8 @@ export function useMap() {
 
   /**
    * 渲染地图, 渲染地图的坐标是世界坐标
-   * 已知经过userTransform变换的map坐标系下的中心点坐标，需要反推出原始地图的坐标映射
-   * (x, y) * userTransform.resolution / mapInfo.resolution -> (mapX, mapY)
-   * (mapX, mapY) + (originX, originY) -> (worldX, worldY)
+   * 已知经过userTransform变换的地图坐标系下的中心点坐标，需要反推出原始地图的坐标映射
+   * (x, y) * userTransform.resolution / mapInfo.resolution -> (originX, originY)
    */
   const viewImage = useMemo(() => {
     if (!mapInfo || !mapData || !viewRect) return null
@@ -47,12 +46,8 @@ export function useMap() {
     for (let row = 0; row < CANVAS_HEIGHT; row++) {
       for (let col = 0; col < CANVAS_WIDTH; col++) {
         // targetCol 和 targetRow 转换到了原始map的resolution下的坐标
-        const targetCol = Math.ceil(
-          (col + viewRect.startX) * scale + mapInfo.origin.position.x,
-        )
-        const targetRow = Math.ceil(
-          (row + viewRect.startY) * scale + mapInfo.origin.position.y,
-        )
+        const targetCol = Math.ceil((col + viewRect.startX) * scale)
+        const targetRow = Math.ceil((row + viewRect.startY) * scale)
 
         // 如果超出边界，则填充为灰色
         if (
@@ -127,7 +122,7 @@ export function useMap() {
 
   /**
    * 根据中心位置计算屏幕显示的局部区域位置
-   * @param centerPosition 处于map坐标系下增加了userTransform变换的中心点坐标
+   * @param centerPosition 处于地图坐标系下的中心点坐标
    */
   const updateViewRect = (centerPosition: { x: number; y: number }) => {
     const { mapInfo } = store.getState().draw
@@ -147,17 +142,13 @@ export function useMap() {
   /**
    * 拖拽触发更新视图中心
    * 初始中心为地图中心
-   * newOrigin: 处于map坐标系下增加了userTransform变换的中心点坐标
+   * newOrigin: 处于地图坐标系下的中心点坐标
    */
   useEffect(() => {
     const scale = mapInfo.resolution / userTransform.resolution
     const newOrigin = {
-      x:
-        (mapInfo.width / 2 - mapInfo.origin.position.x) * scale +
-        userTransform.x,
-      y:
-        (mapInfo.height / 2 - mapInfo.origin.position.y) * scale +
-        userTransform.y,
+      x: (mapInfo.width / 2) * scale + userTransform.x,
+      y: (mapInfo.height / 2) * scale + userTransform.y,
     }
     updateViewRect(newOrigin)
     updateCenterPoint(newOrigin)
