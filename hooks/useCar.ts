@@ -12,8 +12,6 @@ import {
 import { BaseFootprintToMap } from '@/utils/coodinate'
 import { useTransformContext } from '@/store/transform.slice'
 import { carLog } from '@/log/logger'
-import { useDrawContext } from '@/store/draw.slice'
-import { CANVAS_HEIGHT } from '@/components/RobotMap'
 
 export type CarPosition = {
   x: number
@@ -45,7 +43,7 @@ export function useCar() {
 
     /**
      * 处理小车Topic信息，更新小车定位
-     * carPositionInMap * mapInfo.resolution / userTransform.resolution -> carPositionInView
+     * 这里是根据坐标系之间的transform算出来的，最后得到的是map坐标系下resolution为1的坐标
      */
     const msgHandler = _.throttle(
       async (op: any, subscriptionId: number, timestamp: number, data: any) => {

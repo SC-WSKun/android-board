@@ -23,7 +23,7 @@ export function CarIcon(props: ICarIcon) {
         color='blue'
         origin={Skia.Point(x, y)}
         transform={[
-          { rotateZ: (yaw * Math.PI) / 180 }, // 旋转（角度转弧度）a
+          { rotateZ: -(yaw * Math.PI) / 180 }, // 旋转（角度转弧度）a
         ]}
       />
       <Oval x={x - 4} y={y - 4} width={8} height={8} color='lightblue' />

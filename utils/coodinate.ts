@@ -9,13 +9,19 @@ export const canvasToMap = (
   startY: number,
 ): { x: number; y: number } => {
   const {
-    mapInfo: { resolution },
+    mapInfo: { resolution, origin, height },
     userTransform,
   } = store.getState().draw
-  const scale = userTransform.resolution / resolution
+  // canvas坐标系转地图坐标系
+  const worldX = pixelOffsetX + startX
+  const worldY = pixelOffsetY + startY
+  // 地图坐标系转map坐标系(resolution=1)
+  const networkMapX = worldX * userTransform.resolution + origin.position.x
+  const networkMapY =
+    height * resolution - worldY * userTransform.resolution + origin.position.y
   return {
-    x: (pixelOffsetX + startX) * scale,
-    y: (pixelOffsetY + startY) * scale,
+    x: networkMapX,
+    y: networkMapY,
   }
 }
 
@@ -29,10 +35,10 @@ export const mapToCanvas = (
     centerPoint, // Canvas中心点对应的地图坐标,经过userResolution变换过了
     userTransform,
   } = store.getState().draw
-  const scale = resolution / userTransform.resolution
+  const scale = 1 / userTransform.resolution
   // 小车坐标转到地图坐标系
   const worldX = (mapX - origin.position.x) * scale
-  const worldY = (height - (mapY - origin.position.y)) * scale
+  const worldY = (height * resolution - (mapY - origin.position.y)) * scale
   // 地图坐标系转到当前视图位置
   const currentX = worldX + CANVAS_WIDTH / 2 - centerPoint.x
   const currentY = worldY + CANVAS_HEIGHT / 2 - centerPoint.y

@@ -30,7 +30,7 @@ interface IRobotMapProps {
   plugins: string[]
 }
 
-type TapMethod = 'Pointer' | 'REDIRECT' | 'NAVIGATION'
+type TapMethod = 'POINTER' | 'REDIRECT' | 'NAVIGATION'
 
 export const CANVAS_WIDTH = 1000
 export const CANVAS_HEIGHT = 600
@@ -89,7 +89,6 @@ export function RobotMap(props: IRobotMapProps) {
    */
   const tapGesture = Gesture.Tap().onEnd((_event, success) => {
     if (success) {
-      //todo: 这里要根据用户当前模式区分触发事件
       tapPosition.value = { x: _event.x, y: _event.y }
     }
   })
@@ -101,24 +100,27 @@ export function RobotMap(props: IRobotMapProps) {
    */
   useDerivedValue(() => {
     if (tapPosition.value) {
-      // tapPosition.value + viewRect.start 得到的是用户缩放后的地图坐标，这里需要转成map坐标
-      runOnJS(resetCarPosition)(drawingMap?.map_name || '', {
+      // 计算用户缩放后的地图坐标转换成 map 坐标
+      const translatedPosition = {
         translation: {
           x:
-            ((tapPosition.value.x + viewRect.startX) *
-              userTransform.resolution) /
-              mapInfo.resolution +
+            (tapPosition.value.x + viewRect.startX) * userTransform.resolution +
             mapInfo.origin.position.x,
           y:
-            mapInfo.height -
-            ((tapPosition.value.y + viewRect.startY) *
-              userTransform.resolution) /
-              mapInfo.resolution +
+            mapInfo.height * mapInfo.resolution -
+            (tapPosition.value.y + viewRect.startY) * userTransform.resolution +
             mapInfo.origin.position.y,
           z: 0,
         },
         rotation: { x: 0, y: 0, z: 0, w: 1 },
-      })
+      }
+
+      if (tapMethod === 'REDIRECT') {
+        runOnJS(resetCarPosition)(
+          drawingMap?.map_name || '',
+          translatedPosition,
+        )
+      }
       tapPosition.value = null // 重置
     }
   })
@@ -215,7 +217,7 @@ export function RobotMap(props: IRobotMapProps) {
               type: 'info',
               text1: 'You Have Switched To Pointer Mode',
             })
-            setTapMethod('Pointer')
+            setTapMethod('POINTER')
           }}
         >
           <Icon
