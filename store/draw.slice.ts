@@ -4,6 +4,8 @@ import { RootState } from './store'
 
 type NavigationView = 'label' | 'select-map' | 'navigation'
 
+type TapMethod = 'POINTER' | 'REDIRECT' | 'NAVIGATION'
+
 type LaserPoints = any[]
 
 type UserTransform = {
@@ -14,7 +16,9 @@ type UserTransform = {
 
 export interface DrawState {
   mapHasInit: boolean
+  // 导航视图, 默认为选择地图
   currentView: NavigationView
+  // 当前绘制的地图名字等信息
   drawingMap: RobotMap | undefined
   laserPoints: LaserPoints
   // 中心点map坐标
@@ -22,6 +26,7 @@ export interface DrawState {
     x: number
     y: number
   }
+  // 当前绘制的地图详细信息
   mapInfo: {
     width: number
     height: number
@@ -33,7 +38,10 @@ export interface DrawState {
     }
     resolution: number
   }
+  // 用户拖拽与缩放参数
   userTransform: UserTransform
+  // 区分地图点击模式
+  tapMethod: TapMethod
 }
 
 const initialState: DrawState = {
@@ -61,6 +69,7 @@ const initialState: DrawState = {
     x: 0,
     y: 0,
   },
+  tapMethod: 'POINTER',
 }
 
 const drawSlice = createSlice({
@@ -96,6 +105,9 @@ const drawSlice = createSlice({
     updateCenterPoint(state, action: PayloadAction<{ x: number; y: number }>) {
       state.centerPoint = action.payload
     },
+    updateTapMethod(state, action: PayloadAction<TapMethod>) {
+      state.tapMethod = action.payload
+    },
   },
 })
 
@@ -107,6 +119,7 @@ export const {
   updateMapInfo,
   updateUserTransform,
   updateCenterPoint,
+  updateTapMethod,
 } = drawSlice.actions
 export default drawSlice.reducer
 
@@ -121,6 +134,7 @@ export function useDrawContext() {
   const mapHasInit = useSelector((state: RootState) => state.draw.mapHasInit)
   const currentView = useSelector((state: RootState) => state.draw.currentView)
   const drawingMap = useSelector((state: RootState) => state.draw.drawingMap)
+  const tapMethod = useSelector((state: RootState) => state.draw.tapMethod)
 
   return {
     mapInfo,
@@ -130,6 +144,7 @@ export function useDrawContext() {
     mapHasInit,
     currentView,
     drawingMap,
+    tapMethod,
     changeMap: (map: RobotMap) => dispatch(changeMap(map)),
     setCurrentView: (view: NavigationView) => dispatch(setCurrentView(view)),
     updateLaserPoints: (points: LaserPoints) =>
@@ -144,5 +159,7 @@ export function useDrawContext() {
       dispatch(updateUserTransform(newTransform)),
     updateCenterPoint: (newcenterPoint: { x: number; y: number }) =>
       dispatch(updateCenterPoint(newcenterPoint)),
+    updateTapMethod: (newTapMethod: TapMethod) =>
+      dispatch(updateTapMethod(newTapMethod)),
   }
 }
