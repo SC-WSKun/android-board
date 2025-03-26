@@ -20,14 +20,15 @@ export type CarPosition = {
 }
 
 export function useCar() {
-  // map视图下小车的原坐标
+  const dispatch = useDispatch<AppDispatch>()
+  const { updateTransform } = useTransformContext()
+  // 小车的map坐标
   const [carPosition, updateCarPosition] = useState<CarPosition>({
     x: 0,
     y: 0,
     yaw: 0,
   })
-  const { updateTransform } = useTransformContext()
-  const dispatch = useDispatch<AppDispatch>()
+
   /**
    * 订阅小车位置
    */
@@ -76,6 +77,7 @@ export function useCar() {
 
   /**
    * 重定位小车
+   * 坐标需要传map坐标系的坐标
    */
   const resetCarPosition = (map_name: string, newTransform: Transform) => {
     carLog.info(

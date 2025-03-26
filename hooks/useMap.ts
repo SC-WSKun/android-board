@@ -32,20 +32,20 @@ export function useMap() {
   const [mapData, setMapData] = useState<Uint8Array>()
 
   /**
-   * 渲染地图, 渲染地图的坐标是世界坐标
-   * 已知经过userTransform变换的地图坐标系下的中心点坐标，需要反推出原始地图的坐标映射
+   * 渲染地图
+   * 使用经过userTransform.resolution缩放后的网格地图坐标系下的中心点坐标，需要反推出原始网格地图的坐标映射
    * (x, y) * userTransform.resolution / mapInfo.resolution -> (originX, originY)
    */
   const viewImage = useMemo(() => {
     if (!mapInfo || !mapData || !viewRect) return null
-    mapLog.info('start rendering map')
+    mapLog.info('rendering map')
     const pixels = new Uint8Array(CANVAS_WIDTH * CANVAS_HEIGHT * 4) // 初始化像素数组
     const scale = userTransform.resolution / mapInfo.resolution
 
     // 填充 pixels 数组
     for (let row = 0; row < CANVAS_HEIGHT; row++) {
       for (let col = 0; col < CANVAS_WIDTH; col++) {
-        // targetCol 和 targetRow 转换到了原始map的resolution下的坐标
+        // targetCol 和 targetRow 是转换到了原始网格地图的坐标
         const targetCol = Math.ceil((col + viewRect.startX) * scale)
         const targetRow = Math.ceil((row + viewRect.startY) * scale)
 
@@ -95,6 +95,7 @@ export function useMap() {
 
   /**
    * 拉取地图信息
+   * mapData：网格地图二进制数据
    */
   const fetchImageData = async () => {
     mapLog.info('start fetching map')
@@ -109,7 +110,8 @@ export function useMap() {
       )
       if (res?.map?.info) {
         setMapData(res.map.data)
-        updateMapInfo(res.map.info) // 这里传到store是因为计算transform的时候需要用到这个信息
+        // 这里传到store用于计算transform
+        updateMapInfo(res.map.info)
         return Promise.resolve()
       } else {
         throw new Error('Map data is undefined')
@@ -122,7 +124,7 @@ export function useMap() {
 
   /**
    * 根据中心位置计算屏幕显示的局部区域位置
-   * @param centerPosition 处于地图坐标系下的中心点坐标
+   * @param centerPosition 经过userTransform变换的网格地图坐标系下的中心点坐标
    */
   const updateViewRect = (centerPosition: { x: number; y: number }) => {
     const { mapInfo } = store.getState().draw
@@ -142,7 +144,7 @@ export function useMap() {
   /**
    * 拖拽触发更新视图中心
    * 初始中心为地图中心
-   * newOrigin: 处于地图坐标系下的中心点坐标
+   * newOrigin: 经过userTransform变换的网格地图坐标系下的中心点坐标
    */
   useEffect(() => {
     const scale = mapInfo.resolution / userTransform.resolution
@@ -151,6 +153,7 @@ export function useMap() {
       y: (mapInfo.height / 2) * scale + userTransform.y,
     }
     updateViewRect(newOrigin)
+    // 这里需要上传到store用于计算小车位置以及导航轨迹在canvas中的坐标
     updateCenterPoint(newOrigin)
   }, [mapInfo, userTransform])
 

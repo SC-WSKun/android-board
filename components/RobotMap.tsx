@@ -96,11 +96,10 @@ export function RobotMap(props: IRobotMapProps) {
   /**
    * 点击事件触发更新
    * 因为更新涉及状态，所以不能在点击事件中直接runOnJS，需要在reanimated线程中调用
-   * 这里参数不能带redux的状态，会崩掉
    */
   useDerivedValue(() => {
     if (tapPosition.value) {
-      // 计算用户缩放后的地图坐标转换成 map 坐标
+      // 计算用户缩放后的地图坐标转换成map坐标
       const translatedPosition = {
         translation: {
           x:

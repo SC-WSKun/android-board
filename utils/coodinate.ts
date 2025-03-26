@@ -1,7 +1,7 @@
 import { CANVAS_HEIGHT, CANVAS_WIDTH } from '@/components/RobotMap'
 import store from '@/store/store'
 
-// 像素坐标转地图坐标
+// canvas坐标转map坐标
 export const canvasToMap = (
   pixelOffsetX: number,
   pixelOffsetY: number,
@@ -12,10 +12,10 @@ export const canvasToMap = (
     mapInfo: { resolution, origin, height },
     userTransform,
   } = store.getState().draw
-  // canvas坐标系转地图坐标系
+  // canvas坐标系转网格地图坐标系
   const worldX = pixelOffsetX + startX
   const worldY = pixelOffsetY + startY
-  // 地图坐标系转map坐标系(resolution=1)
+  // 网格地图坐标系转map坐标系
   const networkMapX = worldX * userTransform.resolution + origin.position.x
   const networkMapY =
     height * resolution - worldY * userTransform.resolution + origin.position.y
@@ -25,7 +25,7 @@ export const canvasToMap = (
   }
 }
 
-// 小车坐标转Canvas坐标
+// map坐标转Canvas坐标
 export const mapToCanvas = (
   mapX: number,
   mapY: number,
@@ -36,10 +36,10 @@ export const mapToCanvas = (
     userTransform,
   } = store.getState().draw
   const scale = 1 / userTransform.resolution
-  // 小车坐标转到地图坐标系
+  // 小车坐标转到网格地图坐标系
   const worldX = (mapX - origin.position.x) * scale
   const worldY = (height * resolution - (mapY - origin.position.y)) * scale
-  // 地图坐标系转到当前视图位置
+  // 网格地图坐标系转到canvas坐标系
   const currentX = worldX + CANVAS_WIDTH / 2 - centerPoint.x
   const currentY = worldY + CANVAS_HEIGHT / 2 - centerPoint.y
   return {
