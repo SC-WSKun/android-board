@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { View, StyleSheet } from 'react-native'
 import { Canvas, Image } from '@shopify/react-native-skia'
 import LaserPointAtlas from './LaserPointAtlas'
@@ -11,6 +11,7 @@ import { useCar } from '@/hooks/useCar'
 import { useMap } from '@/hooks/useMap'
 import { useLaser } from '@/hooks/useLaser'
 import { CarIcon } from './CarIcon'
+import { CarRoute } from './CarRoute'
 import {
   GestureHandlerRootView,
   GestureDetector,
@@ -37,8 +38,14 @@ export function RobotMap(props: IRobotMapProps) {
   //todo： 这里想做成插件式，动态挂载激光点云这些组件
   const { plugins } = props
   const dispatch = useDispatch<AppDispatch>()
-  const { mapInfo, drawingMap, userTransform, tapMethod, updateUserTransform } =
-    useDrawContext()
+  const {
+    mapInfo,
+    drawingMap,
+    userTransform,
+    tapMethod,
+    routePoints,
+    updateUserTransform,
+  } = useDrawContext()
   const { viewRect, viewImage, fetchImageData } = useMap()
   const {
     carPosition,
@@ -46,12 +53,15 @@ export function RobotMap(props: IRobotMapProps) {
     unsubscribeCarPostition,
     resetCarPosition,
   } = useCar()
-  const { navigateToPosition } = useNavigation()
+  const { navigateToPosition, subscribeCarRoute, unsubscribeCarRoute } =
+    useNavigation()
   const { subscribeTransforms, unsubscribeTransforms } = useTransformContext()
   const { displayLaser } = useLaser()
 
+  // 记录画布拖拽距离
   const translateX = useSharedValue(0)
   const translateY = useSharedValue(0)
+  // 记录画布点击位置
   const tapPosition = useSharedValue<{ x: number; y: number } | null>(null)
 
   /**
@@ -110,9 +120,6 @@ export function RobotMap(props: IRobotMapProps) {
         },
         rotation: { x: 0, y: 0, z: 0, w: 1 },
       }
-      console.log('tapPosition', tapPosition.value)
-      console.log('translatedPosition:', translatedPosition)
-
       switch (tapMethod) {
         case 'REDIRECT':
           runOnJS(resetCarPosition)(
@@ -130,6 +137,9 @@ export function RobotMap(props: IRobotMapProps) {
     }
   })
 
+  /**
+   * 混合拖拽和点击事件
+   */
   const composedEvent = Gesture.Exclusive(dragGesture, tapGesture)
 
   /**
@@ -188,6 +198,7 @@ export function RobotMap(props: IRobotMapProps) {
                   yaw: carPosition.yaw,
                 }}
               />
+              <CarRoute route={routePoints} />
             </Canvas>
           </Animated.View>
         </GestureDetector>

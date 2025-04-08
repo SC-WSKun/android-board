@@ -8,7 +8,7 @@ interface IMapToolBox {}
 export function MapToolBox() {
   const { userTransform, updateTapMethod, updateUserTransform } =
     useDrawContext()
-  const { advertiseNavTopic } = useNavigation()
+  const { advertiseNavTopic, subscribeCarRoute } = useNavigation()
 
   /**
    * 默认光标模式按钮
@@ -69,6 +69,7 @@ export function MapToolBox() {
         style={styles.toolBtn}
         onPress={() => {
           advertiseNavTopic()
+          subscribeCarRoute()
           updateTapMethod('NAVIGATION')
           Toast.show({
             type: 'info',

@@ -1,6 +1,24 @@
-import { advertiseTopic, publishMessage } from '@/store/foxglove.trunk'
+import { navLog } from '@/log/logger'
+import {
+  advertiseTopic,
+  listenMessage,
+  publishMessage,
+  readMsgWithSubId,
+  subscribeTopic,
+  unSubscribeTopic,
+} from '@/store/foxglove.trunk'
 import { AppDispatch } from '@/store/store'
+import { MessageData } from '@foxglove/ws-protocol'
 import { useDispatch } from 'react-redux'
+import _ from 'lodash'
+import { useState } from 'react'
+import { PlanPose, useDrawContext } from '@/store/draw.slice'
+
+type GridPlan = {
+  data: Uint8Array
+  header: Header
+  poses: PlanPose[]
+}
 
 const NAV_TOPIC = '/goal_pose'
 const NAV_TOPIC_CONFIG = {
@@ -14,21 +32,25 @@ const NAV_TOPIC_CONFIG = {
 let goalSeq = 0 // 导航点发布序号
 export function useNavigation() {
   const dispatch = useDispatch<AppDispatch>()
+  const { updateRoutePoints } = useDrawContext()
 
   /**
    * 发布导航话题
    * 主要用来注册channelId
    */
-  const advertiseNavTopic = () => {
-    dispatch(advertiseTopic(NAV_TOPIC_CONFIG))
+  const advertiseNavTopic = async () => {
+    navLog.info('advertise navigation topic /goal_pose')
+    await dispatch(advertiseTopic(NAV_TOPIC_CONFIG))
   }
 
   /**
    * 导航到目标点
+   * 这里导航只指定目标点，不指定偏航角，默认朝向正北
    * @param targetX map坐标系下的x坐标
    * @param targetY map坐标系下的y坐标
    */
   const navigateToPosition = (targetX: number, targetY: number) => {
+    navLog.info(`navigate to (${targetX}, ${targetY})`)
     const currentTime = Date.now()
     dispatch(
       publishMessage(NAV_TOPIC, {
@@ -57,8 +79,48 @@ export function useNavigation() {
     )
   }
 
+  /**
+   * 订阅导航路径与绑定回调
+   */
+  const subscribeCarRoute = async () => {
+    navLog.info('subscribe navigation topic /plan')
+    /**
+     * 处理导航路径消息
+     */
+    const routeMsgHandler = _.throttle(
+      async (op: any, subscriptionId: number, timestamp: number, data: any) => {
+        const parseData = (await dispatch(
+          readMsgWithSubId(subscriptionId, data),
+        )) as GridPlan
+        if (!parseData) {
+          navLog.debug('plan msg is null')
+          return
+        }
+        updateRoutePoints(parseData.poses)
+      },
+      200,
+    )
+    dispatch(subscribeTopic('/plan'))
+      .then(() => {
+        dispatch(listenMessage('/plan', routeMsgHandler))
+      })
+      .catch(err => {
+        navLog.error('subscribe topic /plan error:', err)
+      })
+  }
+
+  /**
+   * 解除订阅导航路径
+   */
+  const unsubscribeCarRoute = async () => {
+    navLog.info('unsubscribe navigation topic /plan')
+    await dispatch(unSubscribeTopic('/plan'))
+  }
+
   return {
     advertiseNavTopic,
     navigateToPosition,
+    subscribeCarRoute,
+    unsubscribeCarRoute,
   }
 }
