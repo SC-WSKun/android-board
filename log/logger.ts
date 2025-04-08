@@ -21,6 +21,7 @@ const log = logger.createLogger({
       MAP: 'cyan',
       ROS: 'magenta',
       CAR: 'cyan',
+      NAV: 'white',
     },
   },
   async: true,
@@ -34,5 +35,6 @@ const log = logger.createLogger({
 const mapLog = log.extend('MAP')
 const rosLog = log.extend('ROS')
 const carLog = log.extend('CAR')
+const navLog = log.extend('NAV')
 
-export { log, mapLog, rosLog, carLog }
+export { log, mapLog, rosLog, carLog, navLog }
