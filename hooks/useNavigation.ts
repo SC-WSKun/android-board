@@ -8,11 +8,9 @@ import {
   unSubscribeTopic,
 } from '@/store/foxglove.trunk'
 import { AppDispatch } from '@/store/store'
-import { MessageData } from '@foxglove/ws-protocol'
 import { useDispatch } from 'react-redux'
-import _ from 'lodash'
-import { useState } from 'react'
 import { PlanPose, useDrawContext } from '@/store/draw.slice'
+import _ from 'lodash'
 
 type GridPlan = {
   data: Uint8Array
