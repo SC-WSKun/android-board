@@ -24,6 +24,7 @@ import Animated, {
 } from 'react-native-reanimated'
 import { mapToCanvas } from '@/utils/coodinate'
 import { MapToolBox } from './MapToolBox'
+import { useNavigation } from '@/hooks/useNavigation'
 
 interface IRobotMapProps {
   plugins: string[]
@@ -45,6 +46,7 @@ export function RobotMap(props: IRobotMapProps) {
     unsubscribeCarPostition,
     resetCarPosition,
   } = useCar()
+  const { navigateToPosition } = useNavigation()
   const { subscribeTransforms, unsubscribeTransforms } = useTransformContext()
   const { displayLaser } = useLaser()
 
@@ -108,12 +110,21 @@ export function RobotMap(props: IRobotMapProps) {
         },
         rotation: { x: 0, y: 0, z: 0, w: 1 },
       }
+      console.log('tapPosition', tapPosition.value)
+      console.log('translatedPosition:', translatedPosition)
 
-      if (tapMethod === 'REDIRECT') {
-        runOnJS(resetCarPosition)(
-          drawingMap?.map_name || '',
-          translatedPosition,
-        )
+      switch (tapMethod) {
+        case 'REDIRECT':
+          runOnJS(resetCarPosition)(
+            drawingMap?.map_name || '',
+            translatedPosition,
+          )
+          break
+        case 'NAVIGATION':
+          runOnJS(navigateToPosition)(
+            translatedPosition.translation.x,
+            translatedPosition.translation.y,
+          )
       }
       tapPosition.value = null // 重置
     }

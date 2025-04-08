@@ -151,14 +151,14 @@ export const unSubscribeTopic =
  * @returns
  */
 export const publishMessage =
-  (channelId: number, message: any) =>
+  (topic: string, message: any) =>
   async (dispatch: AppDispatch, getState: () => RootState) => {
     const advertisedChannels = getState().foxglove.advertisedChannels
     if (!client) {
       rosLog.error('Client not initialized!')
       return
     }
-    const channel = _.find(advertisedChannels, { id: channelId })
+    const channel = _.find(advertisedChannels, { topic })
     if (!channel) {
       rosLog.error('Channel not found!')
       return
@@ -168,7 +168,7 @@ export const publishMessage =
     })
     const writer = new MessageWriter(parseDefinitions)
     const uint8Array = writer.writeMessage(message)
-    client.sendMessage(channelId, uint8Array)
+    client.sendMessage(channel.id, uint8Array)
   }
 
 /**
@@ -239,6 +239,11 @@ export const advertiseTopic =
   async (dispatch: AppDispatch, getState: () => RootState) => {
     if (!client) {
       rosLog.error('Client not initialized!')
+      return
+    }
+    const advertisedChannels = getState().foxglove.advertisedChannels
+    if (advertisedChannels.find(item => item.topic === channel.topic)) {
+      rosLog.warn('Channel already advertised!')
       return
     }
     const channelId = client.advertise(channel)

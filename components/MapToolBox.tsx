@@ -2,11 +2,13 @@ import { View, StyleSheet, TouchableOpacity } from 'react-native'
 import Icon from 'react-native-vector-icons/FontAwesome'
 import Toast from 'react-native-toast-message'
 import { useDrawContext } from '@/store/draw.slice'
+import { useNavigation } from '@/hooks/useNavigation'
 
 interface IMapToolBox {}
 export function MapToolBox() {
   const { userTransform, updateTapMethod, updateUserTransform } =
     useDrawContext()
+  const { advertiseNavTopic } = useNavigation()
 
   /**
    * 默认光标模式按钮
@@ -66,11 +68,12 @@ export function MapToolBox() {
       <TouchableOpacity
         style={styles.toolBtn}
         onPress={() => {
+          advertiseNavTopic()
+          updateTapMethod('NAVIGATION')
           Toast.show({
             type: 'info',
             text1: 'You Have Switched To Navigation Mode',
           })
-          updateTapMethod('NAVIGATION')
         }}
       >
         <Icon
