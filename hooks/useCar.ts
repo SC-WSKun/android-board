@@ -34,38 +34,42 @@ export function useCar() {
    */
   const subscribeCarPosition = () => {
     carLog.info('start subscribe car position')
-    dispatch(subscribeTopic('/tf'))
-      .then((subId: number) => {
-        dispatch(listenMessage('/tf', msgHandler))
-      })
-      .catch((err: any) => {
-        carLog.error('[RobotMap] subscribe topic tf error:', err)
-      })
-
     /**
      * 处理小车Topic信息，更新小车定位
      * 这里是根据坐标系之间的transform算出来的，最后得到的是map坐标系下resolution为1的坐标
      */
     const msgHandler = _.throttle(
       async (op: any, subscriptionId: number, timestamp: number, data: any) => {
-        const parseData: any = await dispatch(
-          readMsgWithSubId(subscriptionId, data),
-        )
-        if (!parseData) return
+        try {
+          const parseData: any = await dispatch(
+            readMsgWithSubId(subscriptionId, data),
+          )
+          if (!parseData) throw new Error('parse tf msg is null')
 
-        const { transforms } = parseData
-        if (transforms) {
-          updateTransforms(transforms)
+          const { transforms } = parseData
+          if (transforms) {
+            updateTransforms(transforms)
+          }
+          const state = store.getState()
+          const odomToMap = state.transform.odomToMap
+          const baseFootprintToOdom = state.transform.baseFootprintToOdom
+          const mapPosition = BaseFootprintToMap(odomToMap, baseFootprintToOdom)
+          if (!mapPosition) throw new Error('mapPosition is null')
+          updateCarPosition(mapPosition)
+        } catch (err) {
+          carLog.debug('parse tf msg error:', err)
         }
-        const state = store.getState()
-        const odomToMap = state.transform.odomToMap
-        const baseFootprintToOdom = state.transform.baseFootprintToOdom
-        const mapPosition = BaseFootprintToMap(odomToMap, baseFootprintToOdom)
-        if (!mapPosition) return
-        updateCarPosition(mapPosition)
       },
-      500,
+      200,
     )
+
+    dispatch(subscribeTopic('/tf'))
+      .then(() => {
+        dispatch(listenMessage('/tf', msgHandler))
+      })
+      .catch((err: any) => {
+        carLog.error('subscribe topic tf error:', err)
+      })
   }
 
   /**
