@@ -83,3 +83,16 @@ type RobotTask = {
   patrol_points: any[]
   task_name: string
 }
+
+/**
+ * ros topic header
+ */
+type Stamp = {
+  nesc: number
+  sec: number
+}
+
+type Header = {
+  frame_id: string
+  stamp: Stamp
+}

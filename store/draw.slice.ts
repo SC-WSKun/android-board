@@ -1,6 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 import { useDispatch, useSelector } from 'react-redux'
 import { RootState } from './store'
+import { update } from 'lodash'
 
 type NavigationView = 'label' | 'select-map' | 'navigation'
 
@@ -12,6 +13,18 @@ type UserTransform = {
   resolution: number
   x: number
   y: number
+}
+
+export type PlanPose = {
+  header: Header
+  pose: {
+    position: {
+      x: number
+      y: number
+      z: number
+    }
+    orientation: Quaternion
+  }
 }
 
 export interface DrawState {
@@ -42,6 +55,8 @@ export interface DrawState {
   userTransform: UserTransform
   // 区分地图点击模式
   tapMethod: TapMethod
+  // 导航点
+  routePoints: PlanPose[]
 }
 
 const initialState: DrawState = {
@@ -70,6 +85,7 @@ const initialState: DrawState = {
     y: 0,
   },
   tapMethod: 'POINTER',
+  routePoints: [],
 }
 
 const drawSlice = createSlice({
@@ -108,6 +124,9 @@ const drawSlice = createSlice({
     updateTapMethod(state, action: PayloadAction<TapMethod>) {
       state.tapMethod = action.payload
     },
+    updateRoutePoints(state, action: PayloadAction<PlanPose[]>) {
+      state.routePoints = action.payload
+    },
   },
 })
 
@@ -120,6 +139,7 @@ export const {
   updateUserTransform,
   updateCenterPoint,
   updateTapMethod,
+  updateRoutePoints,
 } = drawSlice.actions
 export default drawSlice.reducer
 
@@ -135,6 +155,7 @@ export function useDrawContext() {
   const currentView = useSelector((state: RootState) => state.draw.currentView)
   const drawingMap = useSelector((state: RootState) => state.draw.drawingMap)
   const tapMethod = useSelector((state: RootState) => state.draw.tapMethod)
+  const routePoints = useSelector((state: RootState) => state.draw.routePoints)
 
   return {
     mapInfo,
@@ -145,6 +166,7 @@ export function useDrawContext() {
     currentView,
     drawingMap,
     tapMethod,
+    routePoints,
     changeMap: (map: RobotMap) => dispatch(changeMap(map)),
     setCurrentView: (view: NavigationView) => dispatch(setCurrentView(view)),
     updateLaserPoints: (points: LaserPoints) =>
@@ -161,5 +183,7 @@ export function useDrawContext() {
       dispatch(updateCenterPoint(newcenterPoint)),
     updateTapMethod: (newTapMethod: TapMethod) =>
       dispatch(updateTapMethod(newTapMethod)),
+    updateRoutePoints: (newRoutePoints: PlanPose[]) =>
+      dispatch(updateRoutePoints(newRoutePoints)),
   }
 }
