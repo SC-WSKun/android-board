@@ -22,6 +22,8 @@ export function CarRoute(props: ICarRoute) {
     }
   }
 
+  //todo: 一段时间后清空导航路径
+
   return (
     <Path
       path={routePath}

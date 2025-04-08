@@ -23,6 +23,7 @@ export function MapToolBox() {
             text1: 'You Have Switched To Pointer Mode',
           })
           updateTapMethod('POINTER')
+          //todo: unsubscribe car route & nav topic
         }}
       >
         <Icon
@@ -48,6 +49,7 @@ export function MapToolBox() {
             text1: 'You Have Switched To Redirect Mode',
           })
           updateTapMethod('REDIRECT')
+          //todo: unsubscribe car route & nav topic
         }}
       >
         <Icon
@@ -68,13 +70,13 @@ export function MapToolBox() {
       <TouchableOpacity
         style={styles.toolBtn}
         onPress={() => {
-          advertiseNavTopic()
-          subscribeCarRoute()
-          updateTapMethod('NAVIGATION')
           Toast.show({
             type: 'info',
             text1: 'You Have Switched To Navigation Mode',
           })
+          advertiseNavTopic()
+          subscribeCarRoute()
+          updateTapMethod('NAVIGATION')
         }}
       >
         <Icon
