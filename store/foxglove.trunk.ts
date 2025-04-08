@@ -117,6 +117,10 @@ export const subscribeTopic =
     if (!client) {
       return Promise.reject('Client not initialized')
     }
+    const subs = getState().foxglove.subs
+    if (subs[topic]) {
+      return Promise.reject('Subscription already exists')
+    }
     const channels = getState().foxglove.channels
     const channel = _.find(Array.from(Object.values(channels)), { topic })
     if (!channel) {
