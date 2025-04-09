@@ -100,7 +100,6 @@ export function useTransformContext() {
     const parseData: any = await dispatch(
       readMsgWithSubId(subscriptionId, data),
     )
-    //todo: transform is null
     updateTransforms(parseData.transforms)
   }
 

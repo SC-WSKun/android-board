@@ -32,6 +32,8 @@ export function useNavigation() {
   const dispatch = useDispatch<AppDispatch>()
   const { updateRoutePoints } = useDrawContext()
 
+  let clearRouteTimeout: ReturnType<typeof setTimeout> | null = null
+
   /**
    * 发布导航话题
    * 主要用来注册channelId
@@ -95,6 +97,12 @@ export function useNavigation() {
           return
         }
         updateRoutePoints(parseData.poses)
+        // 重置定时器
+        if (clearRouteTimeout) clearTimeout(clearRouteTimeout)
+        clearRouteTimeout = setTimeout(() => {
+          navLog.warn('No /plan message received in 3 seconds, clearing route.')
+          updateRoutePoints([])
+        }, 3000)
       },
       200,
     )
