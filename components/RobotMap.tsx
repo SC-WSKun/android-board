@@ -192,6 +192,8 @@ export function RobotMap(props: IRobotMapProps) {
               />
               {/* 激光点云 */}
               <LaserPointAtlas laserPoints={displayLaser} />
+              {/* 预计路线 */}
+              <CarRoute route={routePoints} />
               {/* 小车 */}
               <CarIcon
                 carPosition={{
@@ -199,7 +201,6 @@ export function RobotMap(props: IRobotMapProps) {
                   yaw: carPosition.yaw,
                 }}
               />
-              <CarRoute route={routePoints} />
             </Canvas>
           </Animated.View>
         </GestureDetector>

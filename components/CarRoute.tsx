@@ -25,7 +25,7 @@ export function CarRoute(props: ICarRoute) {
   return (
     <Path
       path={routePath}
-      color={'grey'}
+      color={'lime'}
       style='stroke'
       strokeJoin='round'
       strokeWidth={2}
