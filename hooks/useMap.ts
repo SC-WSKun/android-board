@@ -38,7 +38,6 @@ export function useMap() {
    */
   const viewImage = useMemo(() => {
     if (!mapInfo || !mapData || !viewRect) return null
-    mapLog.info('rendering map')
     const pixels = new Uint8Array(CANVAS_WIDTH * CANVAS_HEIGHT * 4) // 初始化像素数组
     const scale = userTransform.resolution / mapInfo.resolution
 
@@ -147,6 +146,7 @@ export function useMap() {
    * newOrigin: 经过userTransform变换的网格地图坐标系下的中心点坐标
    */
   useEffect(() => {
+    mapLog.info('update view center point')
     const scale = mapInfo.resolution / userTransform.resolution
     const newOrigin = {
       x: (mapInfo.width / 2) * scale + userTransform.x,
