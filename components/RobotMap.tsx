@@ -45,6 +45,7 @@ export function RobotMap(props: IRobotMapProps) {
     tapMethod,
     routePoints,
     updateUserTransform,
+    setCurrentView,
   } = useDrawContext()
   const { viewRect, viewImage, fetchImageData } = useMap()
   const {
@@ -53,8 +54,7 @@ export function RobotMap(props: IRobotMapProps) {
     unsubscribeCarPostition,
     resetCarPosition,
   } = useCar()
-  const { navigateToPosition, subscribeCarRoute, unsubscribeCarRoute } =
-    useNavigation()
+  const { navigateToPosition } = useNavigation()
   const { subscribeTransforms, unsubscribeTransforms } = useTransformContext()
   const { displayLaser } = useLaser()
 
@@ -171,6 +171,7 @@ export function RobotMap(props: IRobotMapProps) {
     return () => {
       unsubscribeCarPostition()
       unsubscribeTransforms()
+      setCurrentView('select-map')
     }
   }, [drawingMap])
 

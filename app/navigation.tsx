@@ -7,20 +7,14 @@ import { RobotMap } from '@/components/RobotMap'
 import { useDrawContext } from '@/store/draw.slice'
 
 function NavigationScreen() {
-  const { currentView, setCurrentView } = useDrawContext()
+  const { currentView } = useDrawContext()
 
   const renderView = useMemo(() => {
     switch (currentView) {
       case 'label':
         return <LabelView />
       case 'select-map':
-        return (
-          <MapSelectView
-            nextView={() => {
-              setCurrentView('navigation')
-            }}
-          />
-        )
+        return <MapSelectView />
       case 'navigation':
         return <RobotMap plugins={['laser-point']} />
       default:

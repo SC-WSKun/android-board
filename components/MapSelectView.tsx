@@ -6,18 +6,15 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
 import Icon from 'react-native-vector-icons/FontAwesome'
 import { useDispatch } from 'react-redux'
 
-interface IMapSelectView {
-  nextView: () => void
-}
+interface IMapSelectView {}
 export function MapSelectView(props: IMapSelectView) {
-  const { nextView } = props
   const dispatch = useDispatch<AppDispatch>()
   const [mapList, setMapList] = useState([])
-  const { changeMap } = useDrawContext()
+  const { changeMap, setCurrentView } = useDrawContext()
 
   const handleSelectMap = (map: RobotMap) => {
     changeMap(map)
-    nextView()
+    setCurrentView('navigation')
   }
 
   // 渲染地图卡片
