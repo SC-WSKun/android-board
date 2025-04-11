@@ -9,7 +9,9 @@ export default function HomeScreen() {
         source={require('@/assets/images/home-bg.jpg')}
         style={styles.backgroundImage}
       >
-        <Text style={styles.title}>迎宾机器人</Text>
+        <Text style={styles.title} numberOfLines={1}>
+          迎宾机器人
+        </Text>
 
         <View style={styles.buttonContainer}>
           <Link style={styles.button} href={NAVIGATION_MAP.PATROL}>
@@ -50,6 +52,8 @@ const styles = StyleSheet.create({
     fontSize: 150,
     color: 'white',
     fontFamily: 'XiaXing',
+    width: '90%',
+    textAlign: 'center',
   },
   buttonContainer: {
     flexDirection: 'row',
