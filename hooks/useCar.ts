@@ -60,7 +60,7 @@ export function useCar() {
           carLog.debug('parse tf msg error:', err)
         }
       },
-      200,
+      100,
     )
 
     dispatch(subscribeTopic('/tf'))
