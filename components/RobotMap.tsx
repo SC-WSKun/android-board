@@ -24,7 +24,7 @@ import Animated, {
   useSharedValue,
 } from 'react-native-reanimated'
 import { mapToCanvas } from '@/utils/coodinate'
-import { MapToolBox } from './MapToolBox'
+import MapToolBox from './MapToolBox'
 import { useNavigation } from '@/hooks/useNavigation'
 
 interface IRobotMapProps {

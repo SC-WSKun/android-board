@@ -1,3 +1,4 @@
+import React from 'react'
 import { View, StyleSheet, TouchableOpacity } from 'react-native'
 import Icon from 'react-native-vector-icons/FontAwesome'
 import Toast from 'react-native-toast-message'
@@ -5,7 +6,11 @@ import { useDrawContext } from '@/store/draw.slice'
 import { useNavigation } from '@/hooks/useNavigation'
 
 interface IMapToolBox {}
-export function MapToolBox() {
+
+/**
+ * 地图工具栏
+ */
+const MapToolBox = React.memo(() => {
   const { userTransform, updateTapMethod, updateUserTransform } =
     useDrawContext()
   const { advertiseNavTopic, subscribeCarRoute } = useNavigation()
@@ -70,6 +75,7 @@ export function MapToolBox() {
       <TouchableOpacity
         style={styles.toolBtn}
         onPress={() => {
+          console.log('click')
           Toast.show({
             type: 'info',
             text1: 'You Have Switched To Navigation Mode',
@@ -148,7 +154,10 @@ export function MapToolBox() {
       <ScaleDownBtn />
     </View>
   )
-}
+})
+
+MapToolBox.displayName = 'MapToolBox'
+export default MapToolBox
 
 const styles = StyleSheet.create({
   toolContainer: {

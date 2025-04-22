@@ -10,7 +10,7 @@ export default function TaskScreen() {
       case 'map-list':
         return (
           <MapSelectView
-            nextView={() => {
+            onSelectMap={() => {
               updateTaskView('task-list')
             }}
           />
