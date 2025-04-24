@@ -49,7 +49,7 @@ const styles = StyleSheet.create({
     marginBottom: 50,
   },
   title: {
-    fontSize: 150,
+    fontSize: 125,
     color: 'white',
     fontFamily: 'XiaXing',
     width: '90%',

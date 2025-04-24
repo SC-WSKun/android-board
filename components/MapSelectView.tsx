@@ -2,7 +2,13 @@ import { useDrawContext } from '@/store/draw.slice'
 import { callService } from '@/store/foxglove.trunk'
 import { AppDispatch } from '@/store/store'
 import { useEffect, useState } from 'react'
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+} from 'react-native'
 import Icon from 'react-native-vector-icons/FontAwesome'
 import { useDispatch } from 'react-redux'
 
@@ -12,7 +18,7 @@ interface IMapSelectView {
 export function MapSelectView(props: IMapSelectView) {
   const { onSelectMap } = props
   const dispatch = useDispatch<AppDispatch>()
-  const [mapList, setMapList] = useState([])
+  const [mapList, setMapList] = useState<RobotMap[]>([])
   const { changeMap } = useDrawContext()
 
   const handleSelectMap = (map: RobotMap) => {
@@ -35,7 +41,9 @@ export function MapSelectView(props: IMapSelectView) {
         color='#007bff'
         style={styles.cardIcon}
       />
-      <Text style={styles.cardTitle}>{map.map_name}</Text>
+      <Text style={styles.cardTitle} numberOfLines={1}>
+        {map.map_name}
+      </Text>
     </TouchableOpacity>
   )
 
@@ -53,9 +61,11 @@ export function MapSelectView(props: IMapSelectView) {
   return (
     <View style={styles.navigationView}>
       <Text style={styles.title}>请选择机器人加载的地图：</Text>
-      <View style={styles.gridContainer}>
-        {mapList.map(item => renderItem(item))}
-      </View>
+      <ScrollView>
+        <View style={styles.gridContainer}>
+          {mapList.map(item => renderItem(item))}
+        </View>
+      </ScrollView>
     </View>
   )
 }
@@ -64,27 +74,27 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 30,
+    gap: 30,
   },
   title: {
     fontSize: 22,
     fontWeight: 'bold',
-    marginBottom: 20,
   },
   gridContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'flex-start',
     width: '100%',
-    gap: '5%',
-    padding: 48,
+    gap: 20,
   },
   card: {
     width: '30%',
     backgroundColor: '#f8f8f8',
     borderRadius: 10,
     padding: 30,
-    marginBottom: 30,
+    marginBottom: 20,
     elevation: 3, // 添加阴影效果
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -111,6 +121,7 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 20,
     fontWeight: 'bold',
+    width: '55%',
   },
   cardDescription: {
     fontSize: 14,
