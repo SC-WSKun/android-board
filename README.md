@@ -4,6 +4,9 @@
 
 地图相关的操作采用skia引擎，[react-native-skia](https://github.com/shopify/react-native-skia)这个仓库很活跃，[skia](https://skia.org/)本身是google下的2D图形引擎，可靠性也比较高。本来就支持在安卓平台上使用，因此优化上比react-native-canvas好不少。
 
+## 环境配置
+Node.js v20.18.1
+
 ## Todo
 
 - [x] 接入Foxglove Bridge与机器人进行通信
