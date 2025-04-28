@@ -1,7 +1,9 @@
-import { StyleSheet, View, ImageBackground, Text } from 'react-native'
+import { StyleSheet, View, ImageBackground, Text, Button } from 'react-native'
 import { Link } from 'expo-router'
 import { NAVIGATION_MAP } from './_layout'
+import SocketProxy from '@/utils/socketProxy'
 
+SocketProxy.init()
 export default function HomeScreen() {
   return (
     <View style={styles.container}>
@@ -26,6 +28,9 @@ export default function HomeScreen() {
           <Link style={styles.button} href={NAVIGATION_MAP.SETTING}>
             设置
           </Link>
+          <Button title='test' onPress={()=>{
+              SocketProxy.sendTtsText('你好')
+          }}/>
         </View>
       </ImageBackground>
     </View>
