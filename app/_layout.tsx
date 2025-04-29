@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import {
   DarkTheme,
   DefaultTheme,
@@ -6,12 +7,16 @@ import {
 import { useFonts } from 'expo-font'
 import { Stack } from 'expo-router'
 import * as SplashScreen from 'expo-splash-screen'
-import { useEffect } from 'react'
 import 'react-native-reanimated'
 import { Provider } from 'react-redux'
+import { Buffer } from 'buffer'
 import store from '@/store/store'
 import Toast from 'react-native-toast-message'
 import { useColorScheme } from '@/hooks/useColorScheme'
+import SocketProxy from '@/utils/TtsSocketProxy'
+
+// Buffer polyfill
+global.Buffer = Buffer
 
 const ROUTER_MAP = {
   HOME: 'index' as const,
@@ -53,6 +58,8 @@ export default function RootLayout() {
   if (!fontsLoaded) {
     return null
   }
+
+  SocketProxy.init()
 
   return (
     <>

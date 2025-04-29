@@ -1,9 +1,8 @@
 import { StyleSheet, View, ImageBackground, Text, Button } from 'react-native'
 import { Link } from 'expo-router'
 import { NAVIGATION_MAP } from './_layout'
-import SocketProxy from '@/utils/socketProxy'
+import SocketProxy from '@/utils/TtsSocketProxy'
 
-SocketProxy.init()
 export default function HomeScreen() {
   return (
     <View style={styles.container}>
