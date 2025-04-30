@@ -5,7 +5,18 @@
 地图相关的操作采用skia引擎，[react-native-skia](https://github.com/shopify/react-native-skia)这个仓库很活跃，[skia](https://skia.org/)本身是google下的2D图形引擎，可靠性也比较高。本来就支持在安卓平台上使用，因此优化上比react-native-canvas好不少。
 
 ## 环境配置
-Node.js v20.18.1
+1. Node.js v20.18.1
+2. EAS
+   ```sh
+   npm install -g eas-cli && eas login
+   ```
+3. 根据实际情况修改环境变量.env
+   ```
+   EXPO_PUBLIC_MIDDLE_WARE_URL: 机器人中间件TTS的网址 http://xxx:3001
+   EXPO_PUBLIC_HUOSHAN_APP_ID: 火山TTS APP ID
+   EXPO_PUBLIC_HUOSHAN_ACCESS_TOKEN: 火山TTS ACCESS_TOKEN
+   EXPO_PUBLIC_HUOSHAN_KEY: 火山TTS Secrect Key
+   ```
 
 ## Todo
 
@@ -33,6 +44,23 @@ Node.js v20.18.1
 
    ```bash
     npx expo start
+   ```
+
+## Develop
+
+1. prebuild
+
+   因为使用了React-Native的原生库，所以必须要先 Prebuild 才能使用EAS进行构建
+
+   ```sh
+   # 注意clean会把android文件夹删掉重建，如果涉及原生的修改，可以用 config plugin 的方式引入，避免需要一直重写
+   npx expo prebuild --clean
+   ```
+
+2. build development package
+
+   ```
+   eas build --platform android --profile development
    ```
 
 ## 开发建议
@@ -67,6 +95,14 @@ Node.js v20.18.1
 
    - 网格地图坐标系：get_grid_map服务返回的mapData是网格地图的二进制数据。网格地图与map坐标系的关系为`map坐标 / resolution（代表一格多少米）`得来的。地图信息中，width和height代表了网格地图的长宽。网格地图坐标系我设置为以地图的左上角为原点，横坐标向右为正，纵坐标向下为正的坐标系，为什么需要引入这个是因为canvas在渲染ImageData时，坐标系原点也是左上角。这样方便我们基于这个坐标系来确认小车/激光点对应的地图位置，以及在确定视图中心，视图边界的时候需要用到这个坐标系。
    - 视图坐标系/Canvas坐标系：这个坐标系是出于局部渲染的需要，地图太大的时候我们不希望将整个地图渲染到视图中，而是将一部分渲染到视图中，因此需要引入这个坐标系。这个坐标系是在地图上渲染组件的重要坐标系，小车、轨迹这些都需要在这个坐标系中进行渲染。可以通过视图边界所在的坐标来确定当前组件的位置。
+
+4. Can't find "ExpoAudio" Module
+
+   本项目使用expo-audio播放音频，因为目前还处于Beta版本，所以 Expo Go 还不支持这个模块。需要在 prebuild 运行。
+
+5. Download Gradle Timeout
+
+   在构建安卓时需要安装 Gradle，如果一直 Timeout，可以在 `android/gradle/wrapper/gradle-wrapper.properties` 中，更改 `distributionUrl` 为国内镜像。我自己使用的是阿里的镜像：`https://mirrors.aliyun.com/macports/distfiles/gradle`
 
 ## 资源链接
 
