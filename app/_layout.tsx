@@ -13,7 +13,7 @@ import { Buffer } from 'buffer'
 import store from '@/store/store'
 import Toast from 'react-native-toast-message'
 import { useColorScheme } from '@/hooks/useColorScheme'
-import SocketProxy from '@/utils/TtsSocketProxy'
+import SocketProxy, { AUDIO_FILE_PATH } from '@/utils/TtsSocketProxy'
 
 // Buffer polyfill
 global.Buffer = Buffer
@@ -39,6 +39,7 @@ export const NAVIGATION_MAP: NavigationMapType = {
   NOT_FOUND: `/${ROUTER_MAP.NOT_FOUND}`,
 }
 
+
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync()
 
@@ -48,7 +49,6 @@ export default function RootLayout() {
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
     XiaXing: require('../assets/fonts/Slidexiaxing-Regular.ttf'),
   })
-
   useEffect(() => {
     if (fontsLoaded) {
       SplashScreen.hideAsync()

@@ -1,7 +1,7 @@
 import { StyleSheet, View, ImageBackground, Text, Button } from 'react-native'
 import { Link } from 'expo-router'
 import { NAVIGATION_MAP } from './_layout'
-import SocketProxy from '@/utils/TtsSocketProxy'
+import SocketProxy, { AUDIO_FILE_PATH } from '@/utils/TtsSocketProxy'
 
 export default function HomeScreen() {
   return (
@@ -28,7 +28,7 @@ export default function HomeScreen() {
             设置
           </Link>
           <Button title='test' onPress={()=>{
-              SocketProxy.sendTtsText('你好')
+            SocketProxy.sendTtsText('你好')
           }}/>
         </View>
       </ImageBackground>
