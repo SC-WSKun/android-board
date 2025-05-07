@@ -191,7 +191,7 @@ export function RobotMap(props: IRobotMapProps) {
                 height={600}
               />
               {/* 激光点云 */}
-              <LaserPointAtlas laserPoints={displayLaser} />
+              {/* <LaserPointAtlas laserPoints={displayLaser} /> */}
               {/* 预计路线 */}
               <CarRoute route={routePoints} />
               {/* 小车 */}
