@@ -10,7 +10,7 @@
     "web": "expo start --web",
     "test": "jest --watchAll",
     "lint": "expo lint",
-    "prebuild": "expo prebuild --clean"
+    "prebuild": "expo prebuild --platform android --clean"
   },
   "jest": {
     "preset": "jest-expo"

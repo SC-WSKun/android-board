@@ -27,9 +27,12 @@ export default function HomeScreen() {
           <Link style={styles.button} href={NAVIGATION_MAP.SETTING}>
             设置
           </Link>
-          <Button title='test' onPress={()=>{
-            SocketProxy.sendTtsText('你好')
-          }}/>
+          <Button
+            title='test'
+            onPress={() => {
+              SocketProxy.sendTtsText('你好')
+            }}
+          />
         </View>
       </ImageBackground>
     </View>

@@ -5,7 +5,8 @@ import pako from 'pako'
 import TtsPlayer from './TtsPlayer'
 
 // 临时保存的文件路径
-export const AUDIO_FILE_PATH = FileSystem.cacheDirectory + 'tts_stream_audio.mp3'
+export const AUDIO_FILE_PATH =
+  FileSystem.cacheDirectory + 'tts_stream_audio.mp3'
 
 // 缓存所有音频payload片段
 let cachedAudioBuffers: Uint8Array[] = []
@@ -169,7 +170,11 @@ class SocketProxy {
    * @param text 待合成文本
    */
   static sendTtsText(text: string) {
-    this.socket.emit('send-tts-data', text)
+    try {
+      this.socket.emit('send-tts-data', text)
+    } catch (err) {
+      otherLog.error('send tts text error:', err)
+    }
   }
 }
 
