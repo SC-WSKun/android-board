@@ -11,10 +11,8 @@ export const AUDIO_FILE_PATH =
 // 缓存所有音频payload片段
 let cachedAudioBuffers: Uint8Array[] = []
 
-// 是否已经完成
-let audioDone = false
 /**
- * 保存所有缓存的音频
+ * 保存所有缓存的音频片段
  */
 async function saveAudioToFile() {
   try {
@@ -30,7 +28,6 @@ async function saveAudioToFile() {
 
     // 重置
     cachedAudioBuffers = []
-    audioDone = false
   } catch (err) {
     otherLog.error('Save Audio Fail:', err)
   }
@@ -88,7 +85,6 @@ async function parseResponse(res: ArrayBuffer) {
       // sequenceNumber < 0 代表流式语音传输结束
       // 保存音频到临时文件再进行播放
       if (sequenceNumber < 0) {
-        audioDone = true
         await saveAudioToFile()
         await TtsPlayer.playSound(AUDIO_FILE_PATH)
         return true
@@ -103,6 +99,7 @@ async function parseResponse(res: ArrayBuffer) {
     let errorMsg = payload.slice(8)
 
     if (messageCompression === 1) {
+      // @ts-ignore
       errorMsg = pako.ungzip(errorMsg)
     }
 
@@ -119,6 +116,7 @@ async function parseResponse(res: ArrayBuffer) {
     let frontendPayload = payload.slice(4)
 
     if (messageCompression === 1) {
+      // @ts-ignore
       frontendPayload = pako.ungzip(frontendPayload)
     }
 
