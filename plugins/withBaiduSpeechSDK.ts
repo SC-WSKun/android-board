@@ -75,22 +75,25 @@ const withCopyJarLibs: ConfigPlugin = config => {
 const withCoreProjectDependency: ConfigPlugin = config => {
   return withAppBuildGradle(config, config => {
     const gradle = config.modResults.contents
-
-    const dependencyLine = `implementation project(path: ':core')`
+    const dependencyLine = `    implementation project(path: ':core')`
 
     if (!gradle.includes(dependencyLine)) {
-      config.modResults.contents = gradle.replace(
-        /dependencies\s*{([\s\S]*?)}/,
-        (match, inner) => {
-          return `dependencies {\n${inner.trim()}\n    ${dependencyLine}\n}`
-        },
+      const lines = gradle.split('\n')
+      const index = lines.findIndex(line =>
+        line.trim().startsWith('dependencies {'),
       )
+
+      if (index !== -1) {
+        lines.splice(index + 1, 0, dependencyLine) // 插入到下一行
+        config.modResults.contents = lines.join('\n')
+      }
     }
 
     return config
   })
 }
 
+// 在 MainActivity.kt 中引入 SpeechRecognizer
 const withKotlinMainActivityImport: ConfigPlugin = config => {
   return withMainActivity(config, config => {
     const { modResults } = config
