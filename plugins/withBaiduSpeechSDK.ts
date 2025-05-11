@@ -3,6 +3,7 @@ import {
   withAppBuildGradle,
   withDangerousMod,
   withMainActivity,
+  withSettingsGradle,
 } from '@expo/config-plugins'
 import path from 'path'
 import fs from 'fs-extra'
@@ -93,6 +94,19 @@ const withCoreProjectDependency: ConfigPlugin = config => {
   })
 }
 
+// 在 settings.gradle 中添加 core 模块
+const withIncludeCoreModule: ConfigPlugin = config => {
+  return withSettingsGradle(config, modConfig => {
+    const includeLine = `include ':core'`
+
+    if (!modConfig.modResults.contents.includes(includeLine)) {
+      modConfig.modResults.contents += `\n${includeLine}\n`
+    }
+
+    return modConfig
+  })
+}
+
 // 在 MainActivity.kt 中引入 SpeechRecognizer
 const withKotlinMainActivityImport: ConfigPlugin = config => {
   return withMainActivity(config, config => {
@@ -111,6 +125,7 @@ const withKotlinMainActivityImport: ConfigPlugin = config => {
 const withBaiduSpeech: ConfigPlugin = config => {
   config = withCopyNativeLibs(config)
   config = withCopyJarLibs(config)
+  config = withIncludeCoreModule(config)
   config = withCoreProjectDependency(config)
   config = withKotlinMainActivityImport(config)
   return config
