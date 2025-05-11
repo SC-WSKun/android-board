@@ -174,6 +174,17 @@ class SocketProxy {
       otherLog.error('send tts text error:', err)
     }
   }
+
+  /**
+   * 进行大模型交互
+   */
+  static sendQuery(text: string) {
+    try {
+      this.socket.emit('send-tts-data-after-robot', text)
+    } catch (err) {
+      otherLog.error('send query error:', err)
+    }
+  }
 }
 
 export default SocketProxy

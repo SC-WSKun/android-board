@@ -30,7 +30,7 @@ export default function HomeScreen() {
           <Button
             title='测试语音合成'
             onPress={() => {
-              SocketProxy.sendTtsText('你好')
+              SocketProxy.sendQuery('你好,你叫什么名字')
             }}
           />
         </View>
