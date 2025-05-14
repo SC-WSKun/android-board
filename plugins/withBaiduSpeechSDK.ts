@@ -2,37 +2,57 @@ import {
   ConfigPlugin,
   withAppBuildGradle,
   withDangerousMod,
-  withMainActivity,
+  withMainApplication,
+  withProjectBuildGradle,
   withSettingsGradle,
 } from '@expo/config-plugins'
 import path from 'path'
 import fs from 'fs-extra'
 
-// 复制 .so 文件到 android/app/src/main/jniLibs
-const withCopyNativeLibs: ConfigPlugin = config => {
+// 修改 build.gradle 文件
+const withCustomAndroidSdkVersions: ConfigPlugin = config => {
+  return withProjectBuildGradle(config, mod => {
+    let contents = mod.modResults.contents
+
+    const replacements: [RegExp, string][] = [
+      [
+        /Integer.parseInt\(findProperty\('android.compileSdkVersion'\) \?\: '35'\)/,
+        '28',
+      ],
+      [
+        /Integer.parseInt\(findProperty\('android.minSdkVersion'\) \?\: '24'\)/,
+        '16',
+      ],
+      [
+        /Integer.parseInt\(findProperty\('android.targetSdkVersion'\) \?\: '34'\)/,
+        '28',
+      ],
+    ]
+
+    for (const [regex, replacement] of replacements) {
+      contents = contents.replace(regex, replacement)
+    }
+
+    mod.modResults.contents = contents
+    return mod
+  })
+}
+
+// 复制 core 项目到 android/core
+const withCopyCoreModule: ConfigPlugin = config => {
   return withDangerousMod(config, [
     'android',
     async config => {
       const projectRoot = config.modRequest.projectRoot
-      const sourceLibsPath = path.join(
-        projectRoot,
-        'plugins/core/src/main/jniLibs',
-      )
-      const targetLibsPath = path.join(
-        projectRoot,
-        'android',
-        'core',
-        'src',
-        'main',
-        'jniLibs',
-      )
+      const src = path.join(projectRoot, 'plugins/core')
+      const dest = path.join(projectRoot, 'android/core')
 
-      if (fs.existsSync(sourceLibsPath)) {
-        await fs.ensureDir(targetLibsPath)
-        await fs.copy(sourceLibsPath, targetLibsPath, { overwrite: true })
-        console.log('✅ Copied native .so libraries to jniLibs.')
+      if (fs.existsSync(src)) {
+        await fs.remove(dest) // 清除旧的 core 目录（可选）
+        await fs.copy(src, dest)
+        console.log('✅ Copied core module to android/core')
       } else {
-        console.warn('⚠️ libs/jniLibs not found — skipping native lib copy.')
+        console.warn('⚠️ plugins/core not found.')
       }
 
       return config
@@ -40,41 +60,59 @@ const withCopyNativeLibs: ConfigPlugin = config => {
   ])
 }
 
-// 复制 jar 文件到 android/core/libs
-const withCopyJarLibs: ConfigPlugin = config => {
+// 将 WakeupModule.kt 和 WakeupPackage.kt 拷贝到 main 中
+const withWakeupPackage: ConfigPlugin = config => {
   return withDangerousMod(config, [
     'android',
     async config => {
       const projectRoot = config.modRequest.projectRoot
-      const jarSourcePath = path.resolve(
-        projectRoot,
-        'plugins/core/libs/bdasr_V3_20210628_cfe8c44.jar',
-      )
-      const targetLibsPath = path.join(
-        projectRoot,
-        'android/core/libs/bdasr_V3_20210628_cfe8c44.jar',
-      )
-      const targetDir = path.dirname(targetLibsPath) // 获取目标目录路径
 
-      // 检查源文件是否存在
-      if (fs.existsSync(jarSourcePath)) {
-        // 确保目标目录存在，如果不存在则创建
-        await fs.ensureDir(targetDir) // 创建目标目录
-        // 复制 jar 文件到目标目录
-        await fs.copy(jarSourcePath, targetLibsPath, { overwrite: true })
-        console.log('✅ Copied jar libraries to libs.')
-      } else {
-        console.warn('⚠️ libs not found — skipping jar copy.')
-      }
+      // 拷贝Module
+      const sourceModulePath = path.join(
+        projectRoot,
+        'plugins/templates/WakeupModule.kt',
+      )
+      const targetModuleDir = path.join(
+        projectRoot,
+        'android/app/src/main/java/com/anonymous/androidboard',
+      )
+      const targetModulePath = path.join(targetModuleDir, 'WakeupModule.kt')
+      await fs.ensureDir(targetModuleDir)
+      await fs.copyFile(sourceModulePath, targetModulePath)
+      console.log('✅ WakeupModule.kt injected.')
+
+      // 拷贝Package
+      const sourcePackagePath = path.join(
+        projectRoot,
+        'plugins/templates/WakeupPackage.kt',
+      )
+      const targetPackagePath = path.join(targetModuleDir, 'WakeupPackage.kt')
+      await fs.copyFile(sourcePackagePath, targetPackagePath)
+      console.log('✅ WakeupPackage.kt injected.')
 
       return config
     },
   ])
 }
 
-// 添加 core 项目依赖
-const withCoreProjectDependency: ConfigPlugin = config => {
-  return withAppBuildGradle(config, config => {
+const withBaiduWakeUp: ConfigPlugin = config => {
+  // 在 settings.gradle 中添加 core 模块
+  config = withSettingsGradle(config, mod => {
+    const includeLine = `include ':core'`
+    const projectDirLine = `project(':core').projectDir = new File(rootDir, 'core')`
+
+    if (!mod.modResults.contents.includes(includeLine)) {
+      mod.modResults.contents += `\n${includeLine}`
+    }
+    if (!mod.modResults.contents.includes(projectDirLine)) {
+      mod.modResults.contents += `\n${projectDirLine}`
+    }
+
+    return mod
+  })
+
+  // 添加 core 项目依赖
+  config = withAppBuildGradle(config, config => {
     const gradle = config.modResults.contents
     const dependencyLine = `    implementation project(path: ':core')`
 
@@ -92,42 +130,42 @@ const withCoreProjectDependency: ConfigPlugin = config => {
 
     return config
   })
-}
 
-// 在 settings.gradle 中添加 core 模块
-const withIncludeCoreModule: ConfigPlugin = config => {
-  return withSettingsGradle(config, modConfig => {
-    const includeLine = `include ':core'`
-
-    if (!modConfig.modResults.contents.includes(includeLine)) {
-      modConfig.modResults.contents += `\n${includeLine}\n`
+  // 在 MainApplication 中添加 WakeUpPackage
+  config = withMainApplication(config, config => {
+    const mainApplication = config.modResults
+    if (mainApplication.language === 'java') {
+      throw new Error('Only Kotlin MainApplication is supported.')
     }
 
-    return modConfig
-  })
-}
+    const importLine = 'import com.anonymous.androidboard.WakeUpPackage'
+    const registerLine = 'packages.add(WakeUpPackage())'
 
-// 在 MainActivity.kt 中引入 SpeechRecognizer
-const withKotlinMainActivityImport: ConfigPlugin = config => {
-  return withMainActivity(config, config => {
-    const { modResults } = config
-    const importLine = 'import com.baidu.speech.asr.SpeechRecognizer'
-    if (!modResults.contents.includes(importLine)) {
-      modResults.contents = modResults.contents.replace(
-        /^package .+$/m,
-        match => `${match}\n${importLine}`,
+    if (!mainApplication.contents.includes(importLine)) {
+      mainApplication.contents = mainApplication.contents.replace(
+        /^package .*$/m,
+        m => `${m}\n\n${importLine}`,
       )
     }
+
+    if (!mainApplication.contents.includes(registerLine)) {
+      mainApplication.contents = mainApplication.contents.replace(
+        /return packages/,
+        `${registerLine}\n            return packages`,
+      )
+    }
+
     return config
   })
+
+  return config
 }
 
 const withBaiduSpeech: ConfigPlugin = config => {
-  config = withCopyNativeLibs(config)
-  config = withCopyJarLibs(config)
-  config = withIncludeCoreModule(config)
-  config = withCoreProjectDependency(config)
-  config = withKotlinMainActivityImport(config)
+  config = withCustomAndroidSdkVersions(config)
+  config = withCopyCoreModule(config)
+  config = withWakeupPackage(config)
+  config = withBaiduWakeUp(config)
   return config
 }
 

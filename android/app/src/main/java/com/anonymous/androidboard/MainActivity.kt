@@ -1,5 +1,4 @@
 package com.anonymous.androidboard
-import com.baidu.speech.asr.SpeechRecognizer
 import expo.modules.splashscreen.SplashScreenManager
 
 import android.os.Build
