@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { View, StyleSheet } from 'react-native'
+import { View, StyleSheet, Dimensions } from 'react-native'
 import { Canvas, Image } from '@shopify/react-native-skia'
 import LaserPointAtlas from './LaserPointAtlas'
 import { useDispatch } from 'react-redux'
@@ -31,8 +31,8 @@ interface IRobotMapProps {
   plugins: string[]
 }
 
-export const CANVAS_WIDTH = 1000
-export const CANVAS_HEIGHT = 600
+export const CANVAS_WIDTH = Dimensions.get('window').width * 0.75
+export const CANVAS_HEIGHT = (600 / 1000) * CANVAS_WIDTH
 
 export function RobotMap(props: IRobotMapProps) {
   //todo： 这里想做成插件式，动态挂载激光点云这些组件
@@ -187,8 +187,8 @@ export function RobotMap(props: IRobotMapProps) {
                 fit='contain'
                 x={0}
                 y={0}
-                width={1000}
-                height={600}
+                width={CANVAS_WIDTH}
+                height={CANVAS_HEIGHT}
               />
               {/* 激光点云 */}
               {/* <LaserPointAtlas laserPoints={displayLaser} /> */}
@@ -212,38 +212,21 @@ export function RobotMap(props: IRobotMapProps) {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    width: '100%',
+    height: '100%',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-around',
     overflow: 'hidden',
   },
   mapContainer: {
-    width: 1000,
-    height: 600,
+    width: CANVAS_WIDTH,
+    height: CANVAS_HEIGHT,
     overflow: 'hidden',
-    backgroundColor: 'rgb(127, 127, 127)',
+    backgroundColor: 'red',
   },
   animatedMap: {
-    width: 1000,
-    height: 600,
-    backgroundColor: 'rgb(127, 127, 127)',
-  },
-  toolContainer: {
-    width: 80,
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: 12,
-  },
-  toolBtn: {
-    width: 40,
-    height: 40,
-    padding: 5,
-    borderColor: '#007bff',
-    borderWidth: 2,
-    borderRadius: 5,
-  },
-  btnIcon: {
-    backgroundColor: 'transparent', // 图标的背景颜色
+    width: CANVAS_WIDTH,
+    height: CANVAS_HEIGHT,
   },
 })
