@@ -1,7 +1,17 @@
-import { StyleSheet, View, ImageBackground, Text, Button } from 'react-native'
+import {
+  StyleSheet,
+  View,
+  ImageBackground,
+  Text,
+  Button,
+  NativeModules,
+  NativeEventEmitter,
+} from 'react-native'
 import { Link } from 'expo-router'
 import { NAVIGATION_MAP } from './_layout'
 import SocketProxy from '@/utils/TtsSocketProxy'
+
+const { WakeUpModule } = NativeModules
 
 export default function HomeScreen() {
   return (
@@ -28,9 +38,10 @@ export default function HomeScreen() {
             设置
           </Link>
           <Button
-            title='测试语音合成'
+            title='测试语音唤醒'
             onPress={() => {
-              SocketProxy.sendQuery('你好,你叫什么名字')
+              // 启动唤醒
+              WakeUpModule.startWakeUp()
             }}
           />
         </View>

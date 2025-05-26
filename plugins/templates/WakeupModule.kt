@@ -1,9 +1,12 @@
 package com.anonymous.androidboard
 
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import com.baidu.aip.asrwakeup3.core.util.AuthUtil
 import com.baidu.aip.asrwakeup3.core.wakeup.MyWakeup
 import com.baidu.aip.asrwakeup3.core.wakeup.listener.RecogWakeupListener
+import com.baidu.aip.asrwakeup3.core.wakeup.listener.IWakeupListener
 import com.facebook.react.bridge.*
 import com.facebook.react.modules.core.DeviceEventManagerModule
 import com.baidu.speech.asr.SpeechConstant
@@ -22,10 +25,8 @@ class WakeUpModule(private val reactContext: ReactApplicationContext) :
         Log.d("WakeUpModule", "startWakeUp called")
 
         if (myWakeup == null) {
-            val listener = RecogWakeupListener { msg ->
-                val result = msg.obj?.toString() ?: ""
-                sendEvent("onWakeUpResult", result)
-            }
+            val handler = Handler(Looper.getMainLooper())
+            val listener: IWakeupListener = RecogWakeupListener(handler)
             myWakeup = MyWakeup(reactContext, listener)
         }
 

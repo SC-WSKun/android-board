@@ -15,7 +15,7 @@ import { useDispatch } from 'react-redux'
 
 export default function SettingScreen() {
   const dispatch = useDispatch<AppDispatch>()
-  const [ipAddress, setIpAddress] = useState<string>('10.0.1.118') // 存储 IP 地址
+  const [ipAddress, setIpAddress] = useState<string>('192.168.1.102') // 存储 IP 地址
   const [isValid, setIsValid] = useState<boolean>(true) // 存储 IP 地址的有效性状态
 
   // 校验 IP 地址的简单函数

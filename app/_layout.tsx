@@ -39,7 +39,6 @@ export const NAVIGATION_MAP: NavigationMapType = {
   NOT_FOUND: `/${ROUTER_MAP.NOT_FOUND}`,
 }
 
-
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync()
 

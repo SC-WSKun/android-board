@@ -26,8 +26,8 @@ export function useMap() {
   const [viewRect, setViewRect] = useState<ViewRect>({
     startX: 0,
     startY: 0,
-    endX: 1000,
-    endY: 600,
+    endX: CANVAS_WIDTH,
+    endY: CANVAS_HEIGHT,
   })
   const [mapData, setMapData] = useState<Uint8Array>()
 

@@ -9,35 +9,6 @@ import {
 import path from 'path'
 import fs from 'fs-extra'
 
-// 修改 build.gradle 文件
-const withCustomAndroidSdkVersions: ConfigPlugin = config => {
-  return withProjectBuildGradle(config, mod => {
-    let contents = mod.modResults.contents
-
-    const replacements: [RegExp, string][] = [
-      [
-        /Integer.parseInt\(findProperty\('android.compileSdkVersion'\) \?\: '35'\)/,
-        '28',
-      ],
-      [
-        /Integer.parseInt\(findProperty\('android.minSdkVersion'\) \?\: '24'\)/,
-        '16',
-      ],
-      [
-        /Integer.parseInt\(findProperty\('android.targetSdkVersion'\) \?\: '34'\)/,
-        '28',
-      ],
-    ]
-
-    for (const [regex, replacement] of replacements) {
-      contents = contents.replace(regex, replacement)
-    }
-
-    mod.modResults.contents = contents
-    return mod
-  })
-}
-
 // 复制 core 项目到 android/core
 const withCopyCoreModule: ConfigPlugin = config => {
   return withDangerousMod(config, [
@@ -161,11 +132,55 @@ const withBaiduWakeUp: ConfigPlugin = config => {
   return config
 }
 
+// 拷贝jniLibs到app中
+const withJniLibs: ConfigPlugin = config => {
+  return withDangerousMod(config, [
+    'android',
+    async config => {
+      const projectRoot = config.modRequest.projectRoot
+      const src = path.join(projectRoot, 'plugins/core/src/main/jniLibs')
+      const dest = path.join(projectRoot, 'android/app/src/main/jniLibs')
+
+      if (fs.existsSync(src)) {
+        await fs.remove(dest)
+        await fs.copy(src, dest)
+        console.log('✅ Copied jniLibs to android/app')
+      } else {
+        console.warn('⚠️ jniLibs not found.')
+      }
+
+      return config
+    },
+  ])
+}
+
+// 拷贝 assets 到 app 中
+const withAssets: ConfigPlugin = config => {
+  return withDangerousMod(config, [
+    'android',
+    async config => {
+      const projectRoot = config.modRequest.projectRoot
+      const src = path.join(projectRoot, 'plugins/core/src/main/assets')
+      const dest = path.join(projectRoot, 'android/app/src/main/assets')
+
+      if (fs.existsSync(src)) {
+        await fs.remove(dest)
+        await fs.copy(src, dest)
+        console.log('✅ Copied assets to android/app')
+      } else {
+        console.warn('⚠️ assets not found.')
+      }
+      return config
+    },
+  ])
+}
+
 const withBaiduSpeech: ConfigPlugin = config => {
-  config = withCustomAndroidSdkVersions(config)
   config = withCopyCoreModule(config)
   config = withWakeupPackage(config)
   config = withBaiduWakeUp(config)
+  config = withJniLibs(config)
+  config = withAssets(config)
   return config
 }
 
