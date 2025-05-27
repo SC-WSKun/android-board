@@ -177,34 +177,36 @@ export function RobotMap(props: IRobotMapProps) {
 
   return (
     <View style={styles.container}>
-      <GestureHandlerRootView style={styles.mapContainer}>
-        <GestureDetector gesture={composedEvent}>
-          <Animated.View style={[animatedStyle, styles.animatedMap]}>
-            <Canvas style={{ width: CANVAS_WIDTH, height: CANVAS_HEIGHT }}>
-              {/* 地图 */}
-              <Image
-                image={viewImage}
-                fit='contain'
-                x={0}
-                y={0}
-                width={CANVAS_WIDTH}
-                height={CANVAS_HEIGHT}
-              />
-              {/* 激光点云 */}
-              {/* <LaserPointAtlas laserPoints={displayLaser} /> */}
-              {/* 预计路线 */}
-              <CarRoute route={routePoints} />
-              {/* 小车 */}
-              <CarIcon
-                carPosition={{
-                  ...mapToCanvas(carPosition.x, carPosition.y),
-                  yaw: carPosition.yaw,
-                }}
-              />
-            </Canvas>
-          </Animated.View>
-        </GestureDetector>
-      </GestureHandlerRootView>
+      <View style={styles.mapContainer}>
+        <GestureHandlerRootView>
+          <GestureDetector gesture={composedEvent}>
+            <Animated.View style={[animatedStyle, styles.animatedMap]}>
+              <Canvas style={{ width: CANVAS_WIDTH, height: CANVAS_HEIGHT }}>
+                {/* 地图 */}
+                <Image
+                  image={viewImage}
+                  fit='contain'
+                  x={0}
+                  y={0}
+                  width={CANVAS_WIDTH}
+                  height={CANVAS_HEIGHT}
+                />
+                {/* 激光点云 */}
+                {/* <LaserPointAtlas laserPoints={displayLaser} /> */}
+                {/* 预计路线 */}
+                <CarRoute route={routePoints} />
+                {/* 小车 */}
+                <CarIcon
+                  carPosition={{
+                    ...mapToCanvas(carPosition.x, carPosition.y),
+                    yaw: carPosition.yaw,
+                  }}
+                />
+              </Canvas>
+            </Animated.View>
+          </GestureDetector>
+        </GestureHandlerRootView>
+      </View>
       <MapToolBox />
     </View>
   )
@@ -223,7 +225,7 @@ const styles = StyleSheet.create({
     width: CANVAS_WIDTH,
     height: CANVAS_HEIGHT,
     overflow: 'hidden',
-    backgroundColor: 'red',
+    backgroundColor: 'rgb(127, 127, 127)',
   },
   animatedMap: {
     width: CANVAS_WIDTH,
