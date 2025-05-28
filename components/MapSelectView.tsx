@@ -71,7 +71,9 @@ export function MapSelectView(props: IMapSelectView) {
 }
 const styles = StyleSheet.create({
   navigationView: {
-    flex: 1,
+    width: '100%',
+    height: '100%',
+    display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 20,
@@ -90,7 +92,7 @@ const styles = StyleSheet.create({
     gap: 20,
   },
   card: {
-    width: '30%',
+    width: 220,
     backgroundColor: '#f8f8f8',
     borderRadius: 10,
     padding: 30,
