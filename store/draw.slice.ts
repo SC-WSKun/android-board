@@ -115,7 +115,9 @@ const drawSlice = createSlice({
       state.mapInfo = action.payload
     },
     updateUserTransform(state, action: PayloadAction<UserTransform>) {
-      state.userTransform = action.payload
+      if (state.tapMethod !== 'REDIRECT') {
+        state.userTransform = action.payload
+      }
     },
     updateCenterPoint(state, action: PayloadAction<{ x: number; y: number }>) {
       state.centerPoint = action.payload

@@ -85,7 +85,7 @@ export function useCar() {
    */
   const resetCarPosition = (map_name: string, newTransform: Transform) => {
     carLog.info(
-      `reset car position to (${newTransform.translation.x}, ${newTransform.translation.y})`,
+      `reset car position to translation ${JSON.stringify(newTransform.translation)}, rotation:${JSON.stringify(newTransform.rotation)}`,
     )
     dispatch(
       callService('/tiered_nav_state_machine/load_map', {

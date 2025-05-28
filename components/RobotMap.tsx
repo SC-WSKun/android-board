@@ -23,7 +23,7 @@ import Animated, {
   useDerivedValue,
   useSharedValue,
 } from 'react-native-reanimated'
-import { mapToCanvas } from '@/utils/coodinate'
+import { getQuaternionFromTranslation, mapToCanvas } from '@/utils/coodinate'
 import MapToolBox from './MapToolBox'
 import { useNavigation } from '@/hooks/useNavigation'
 
@@ -61,6 +61,8 @@ export function RobotMap(props: IRobotMapProps) {
   // 记录画布拖拽距离
   const translateX = useSharedValue(0)
   const translateY = useSharedValue(0)
+  const translateStartX = useSharedValue(0)
+  const translateStartY = useSharedValue(0)
   // 记录画布点击位置
   const tapPosition = useSharedValue<{ x: number; y: number } | null>(null)
 
@@ -71,20 +73,74 @@ export function RobotMap(props: IRobotMapProps) {
     .averageTouches(true)
     .onStart(e => {
       translateX.value = 0
+      translateStartX.value = e.x
       translateY.value = 0
+      translateStartY.value = e.y
     })
     .onUpdate(e => {
       translateX.value = e.translationX
       translateY.value = e.translationY
     })
-    .onEnd(() => {
+    .onEnd(_event => {
       // 这里必须用runOnJS来调用updateUserTransform，因为GestureDetector运行在Reanimated线程，而redux的状态更新在JS线程。
       // 如果不使用runOnJS，RN会崩溃。
-      runOnJS(updateUserTransform)({
-        x: userTransform.x - translateX.value,
-        y: userTransform.y - translateY.value,
-        resolution: userTransform.resolution,
-      })
+      switch (tapMethod) {
+        case 'REDIRECT': {
+          function getQuaternionFromTranslation(
+            translateX: number,
+            translateY: number,
+          ) {
+            // 判断是否有效位移，避免 atan2(0, 0) 产生 NaN
+            if (translateX === 0 && translateY === 0) {
+              return { x: 0, y: 0, z: 0, w: 1 } // 表示无旋转
+            }
+
+            // 计算偏航角（弧度）
+            const yaw = Math.atan2(translateY, translateX)
+
+            // 计算四元数（绕 Z 轴）
+            const halfYaw = yaw / 2
+            const sinHalfYaw = Math.sin(halfYaw)
+            const cosHalfYaw = Math.cos(halfYaw)
+
+            return {
+              x: 0,
+              y: 0,
+              z: sinHalfYaw,
+              w: cosHalfYaw,
+            }
+          }
+          const translatedPosition = {
+            translation: {
+              x:
+                (translateStartX.value + viewRect.startX) *
+                  userTransform.resolution +
+                mapInfo.origin.position.x,
+              y:
+                mapInfo.height * mapInfo.resolution -
+                (translateStartY.value + viewRect.startY) *
+                  userTransform.resolution +
+                mapInfo.origin.position.y,
+              z: 0,
+            },
+            rotation: getQuaternionFromTranslation(
+              _event.translationX,
+              -_event.translationY,
+            ),
+          }
+          runOnJS(resetCarPosition)(
+            drawingMap?.map_name || '',
+            translatedPosition,
+          )
+          break
+        }
+        default:
+          runOnJS(updateUserTransform)({
+            x: userTransform.x - translateX.value,
+            y: userTransform.y - translateY.value,
+            resolution: userTransform.resolution,
+          })
+      }
       // 重置canvas位置
       translateX.value = 0
       translateY.value = 0
@@ -105,8 +161,8 @@ export function RobotMap(props: IRobotMapProps) {
    * 因为更新涉及状态，所以不能在点击事件中直接runOnJS，需要在reanimated线程中调用
    */
   useDerivedValue(() => {
+    // 计算用户缩放后的地图坐标转换成map坐标
     if (tapPosition.value) {
-      // 计算用户缩放后的地图坐标转换成map坐标
       const translatedPosition = {
         translation: {
           x:
@@ -121,12 +177,6 @@ export function RobotMap(props: IRobotMapProps) {
         rotation: { x: 0, y: 0, z: 0, w: 1 },
       }
       switch (tapMethod) {
-        case 'REDIRECT':
-          runOnJS(resetCarPosition)(
-            drawingMap?.map_name || '',
-            translatedPosition,
-          )
-          break
         case 'NAVIGATION':
           runOnJS(navigateToPosition)(
             translatedPosition.translation.x,
@@ -145,12 +195,20 @@ export function RobotMap(props: IRobotMapProps) {
   /**
    * 动画样式，直接让 Canvas 跟随手指
    */
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [
-      { translateX: translateX.value },
-      { translateY: translateY.value },
-    ],
-  }))
+  const animatedStyle = useAnimatedStyle(() => {
+    if (tapMethod === 'REDIRECT') {
+      return {
+        transform: [],
+      }
+    } else {
+      return {
+        transform: [
+          { translateX: translateX.value },
+          { translateY: translateY.value },
+        ],
+      }
+    }
+  })
 
   /**
    * 订阅必须topic，卸载组件时取消订阅
