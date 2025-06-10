@@ -2,20 +2,13 @@ import ImageContainer from '@/components/ui/ImageContainer'
 import { initClient } from '@/store/foxglove.trunk'
 import { AppDispatch } from '@/store/store'
 import { useState } from 'react'
-import {
-  StyleSheet,
-  View,
-  Text,
-  Alert,
-  TextInput,
-  Button,
-  Pressable,
-} from 'react-native'
+import Toast from 'react-native-toast-message'
+import { StyleSheet, View, Text, TextInput, Pressable } from 'react-native'
 import { useDispatch } from 'react-redux'
 
 export default function SettingScreen() {
   const dispatch = useDispatch<AppDispatch>()
-  const [ipAddress, setIpAddress] = useState<string>('192.168.1.102') // 存储 IP 地址
+  const [ipAddress, setIpAddress] = useState<string>('10.3.51.198') // 存储 IP 地址
   const [isValid, setIsValid] = useState<boolean>(true) // 存储 IP 地址的有效性状态
 
   // 校验 IP 地址的简单函数
@@ -29,15 +22,24 @@ export default function SettingScreen() {
   const handleSubmit = () => {
     if (!validateIP(ipAddress)) {
       setIsValid(false)
-      Alert.alert('错误', '请输入有效的 IP 地址！')
+      Toast.show({
+        type: 'error',
+        text1: '请输入有效的 IP 地址！',
+      })
       return
     }
     dispatch(initClient(ipAddress))
       .then(() => {
-        Alert.alert('成功', `IP 地址 ${ipAddress} 配置成功！`)
+        Toast.show({
+          type: 'success',
+          text1: `IP 地址 ${ipAddress} 配置成功！`,
+        })
       })
       .catch((err: any) => {
-        Alert.alert('错误', `IP 地址 ${ipAddress} 配置失败！${err}`)
+        Toast.show({
+          type: 'error',
+          text1: `IP 地址 ${ipAddress} 配置失败！${err}`,
+        })
       })
   }
   return (
