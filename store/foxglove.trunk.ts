@@ -278,12 +278,12 @@ export const unAdvertiseTopic =
   }
 
 /**
- * receive the message from subscribeb channel
+ * receive the message from subscribeb channel by topic name
  * @param topic name of subcribed channel
  * @param callback
  * @returns
  */
-export const listenMessage =
+export const listenMessageByTopic =
   (topic: string, callback: (...args: any) => void) =>
   async (dispatch: AppDispatch, getState: () => RootState) => {
     const subs = getState().foxglove.subs
@@ -306,6 +306,22 @@ export const listenMessage =
     }
     client.on('message', msgHandler)
   }
+
+/**
+ * receive the message from subscribeb channel
+ * @param callback
+ * @returns
+ */
+export const listenMessage = (callback: (...args: any) => void) => {
+  if (!client) {
+    rosLog.error('Client not initialized!')
+    return
+  }
+  const msgHandler = ({ op, subscriptionId, timestamp, data }: MessageData) => {
+    callback(op, subscriptionId, timestamp, data)
+  }
+  client.on('message', msgHandler)
+}
 
 /**
  * stop listen message of callback

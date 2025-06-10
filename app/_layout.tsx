@@ -21,9 +21,10 @@ global.Buffer = Buffer
 const ROUTER_MAP = {
   HOME: 'index' as const,
   NAVIGATION: 'navigation' as const,
-  PATROL: 'patrol' as const,
+  STATUS: 'status' as const,
   SETTING: 'setting' as const,
   NOT_FOUND: '+not-found' as const,
+  PATROL: 'patrol' as const,
 }
 
 // 使用映射生成 NAVIGATION_MAP，因为 expo-router 跳转的时候需要使用 / 开头
@@ -34,6 +35,7 @@ type NavigationMapType = {
 export const NAVIGATION_MAP: NavigationMapType = {
   HOME: `/${ROUTER_MAP.HOME}`,
   PATROL: `/${ROUTER_MAP.PATROL}`,
+  STATUS: `/${ROUTER_MAP.STATUS}`,
   NAVIGATION: `/${ROUTER_MAP.NAVIGATION}`,
   SETTING: `/${ROUTER_MAP.SETTING}`,
   NOT_FOUND: `/${ROUTER_MAP.NOT_FOUND}`,
@@ -71,6 +73,10 @@ export default function RootLayout() {
             />
             <Stack.Screen
               name={ROUTER_MAP.PATROL}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name={ROUTER_MAP.STATUS}
               options={{ headerShown: false }}
             />
             <Stack.Screen

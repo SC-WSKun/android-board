@@ -1,6 +1,6 @@
 import { useDrawContext } from '@/store/draw.slice'
 import {
-  listenMessage,
+  listenMessageByTopic,
   readMsgWithSubId,
   subscribeTopic,
   unSubscribeTopic,
@@ -63,7 +63,7 @@ export function useLaser() {
   const subscribeLaser = () => {
     dispatch(subscribeTopic('/scan'))
       .then((res: any) => {
-        dispatch(listenMessage('/scan', laserPointHandler))
+        dispatch(listenMessageByTopic('/scan', laserPointHandler))
       })
       .catch((err: any) => {
         console.error('[RobotMap] subscribe topic scan error:', err)

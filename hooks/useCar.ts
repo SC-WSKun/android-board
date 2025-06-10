@@ -4,7 +4,7 @@ import { useDispatch } from 'react-redux'
 import store, { AppDispatch } from '@/store/store'
 import {
   callService,
-  listenMessage,
+  listenMessageByTopic,
   readMsgWithSubId,
   subscribeTopic,
   unSubscribeTopic,
@@ -65,7 +65,7 @@ export function useCar() {
 
     dispatch(subscribeTopic('/tf'))
       .then(() => {
-        dispatch(listenMessage('/tf', msgHandler))
+        dispatch(listenMessageByTopic('/tf', msgHandler))
       })
       .catch((err: any) => {
         carLog.error('subscribe topic tf error:', err)

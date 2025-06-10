@@ -4,7 +4,7 @@ import { AppDispatch, RootState } from './store'
 import { TRANSFORM_MAP } from '@/constants/TransformMap'
 import { rosLog } from '@/log/logger'
 import {
-  listenMessage,
+  listenMessageByTopic,
   readMsgWithSubId,
   subscribeTopic,
   unSubscribeTopic,
@@ -106,7 +106,7 @@ export function useTransformContext() {
   const subscribeTransforms = () => {
     dispatch(subscribeTopic('/tf_static'))
       .then((res: any) => {
-        dispatch(listenMessage('/tf_static', tfStaticHandler))
+        dispatch(listenMessageByTopic('/tf_static', tfStaticHandler))
       })
       .catch((err: any) => {
         rosLog.error('subscribe topic tf_static error:', err)

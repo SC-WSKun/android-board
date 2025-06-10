@@ -4,6 +4,8 @@ import Icon from 'react-native-vector-icons/FontAwesome'
 import Toast from 'react-native-toast-message'
 import { useDrawContext } from '@/store/draw.slice'
 import { useNavigation } from '@/hooks/useNavigation'
+import { useRouter } from 'expo-router'
+import { NAVIGATION_MAP } from '@/app/_layout'
 
 interface IMapToolBox {}
 
@@ -14,6 +16,7 @@ const MapToolBox = React.memo(() => {
   const { userTransform, updateTapMethod, updateUserTransform } =
     useDrawContext()
   const { advertiseNavTopic, subscribeCarRoute } = useNavigation()
+  const router = useRouter()
 
   /**
    * 默认光标模式按钮
@@ -145,6 +148,27 @@ const MapToolBox = React.memo(() => {
     )
   }
 
+  /**
+   * 巡逻任务按钮
+   */
+  const TaskBtn = () => {
+    return (
+      <TouchableOpacity
+        style={styles.toolBtn}
+        onPress={() => {
+          router.push(NAVIGATION_MAP.PATROL)
+        }}
+      >
+        <Icon
+          name='calendar-check-o'
+          size={25}
+          color='#007bff'
+          style={[styles.btnIcon, { paddingLeft: 1.5 }]}
+        />
+      </TouchableOpacity>
+    )
+  }
+
   return (
     <View style={styles.toolContainer}>
       <PointerModBtn />
@@ -152,6 +176,7 @@ const MapToolBox = React.memo(() => {
       <NavModBtn />
       <ScaleUpBtn />
       <ScaleDownBtn />
+      <TaskBtn />
     </View>
   )
 })

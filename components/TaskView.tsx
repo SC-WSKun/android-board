@@ -1,6 +1,7 @@
 import { callService } from '@/store/foxglove.trunk'
 import { AppDispatch } from '@/store/store'
 import { useRobotTaskContext } from '@/store/task.slice'
+import { useRouter } from 'expo-router'
 import { useEffect } from 'react'
 import { StyleSheet, View, Text, TouchableOpacity } from 'react-native'
 import Icon from 'react-native-vector-icons/FontAwesome'
@@ -12,6 +13,7 @@ type StartPatrolReq = {
 }
 export function TaskView() {
   const dispatch = useDispatch<AppDispatch>()
+  const router = useRouter()
   const { taskList, updateTaskList } = useRobotTaskContext()
 
   const handleSelectTask = (task: RobotTask) => {
@@ -61,6 +63,8 @@ export function TaskView() {
     const res: any = await dispatch(
       callService('/nav2_extended/start_patrol', params),
     )
+    console.log('res', res)
+    router.back()
   }
 
   useEffect(() => {

@@ -1,7 +1,7 @@
 import { navLog } from '@/log/logger'
 import {
   advertiseTopic,
-  listenMessage,
+  listenMessageByTopic,
   publishMessage,
   readMsgWithSubId,
   subscribeTopic,
@@ -108,7 +108,7 @@ export function useNavigation() {
     )
     dispatch(subscribeTopic('/plan'))
       .then(() => {
-        dispatch(listenMessage('/plan', routeMsgHandler))
+        dispatch(listenMessageByTopic('/plan', routeMsgHandler))
       })
       .catch(err => {
         navLog.error('subscribe topic /plan error:', err)

@@ -1,17 +1,7 @@
-import {
-  StyleSheet,
-  View,
-  ImageBackground,
-  Text,
-  Button,
-  NativeModules,
-  NativeEventEmitter,
-} from 'react-native'
+import { StyleSheet, View, ImageBackground, Text } from 'react-native'
 import { Link } from 'expo-router'
 import { NAVIGATION_MAP } from './_layout'
-import SocketProxy from '@/utils/TtsSocketProxy'
-
-const { WakeUpModule } = NativeModules
+import { AudioRecordBtn } from '@/components/AudioRecordBtn'
 
 export default function HomeScreen() {
   return (
@@ -25,25 +15,15 @@ export default function HomeScreen() {
         </Text>
 
         <View style={styles.buttonContainer}>
-          <Link style={styles.button} href={NAVIGATION_MAP.PATROL}>
-            巡逻
-          </Link>
           <Link style={styles.button} href={NAVIGATION_MAP.NAVIGATION}>
             导航
           </Link>
-          <Link style={styles.button} href='/buildmap'>
-            建图
+          <Link style={styles.button} href={NAVIGATION_MAP.STATUS}>
+            状态
           </Link>
           <Link style={styles.button} href={NAVIGATION_MAP.SETTING}>
             设置
           </Link>
-          <Button
-            title='测试语音唤醒'
-            onPress={() => {
-              // 启动唤醒
-              WakeUpModule.startWakeUp()
-            }}
-          />
         </View>
       </ImageBackground>
     </View>
