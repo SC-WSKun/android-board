@@ -23,7 +23,7 @@ import Animated, {
   useDerivedValue,
   useSharedValue,
 } from 'react-native-reanimated'
-import { getQuaternionFromTranslation, mapToCanvas } from '@/utils/coodinate'
+import { mapToCanvas } from '@/utils/coodinate'
 import MapToolBox from './MapToolBox'
 import { useNavigation } from '@/hooks/useNavigation'
 
