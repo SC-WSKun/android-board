@@ -37,7 +37,12 @@ export function useMap() {
    * (x, y) * userTransform.resolution / mapInfo.resolution -> (originX, originY)
    */
   const viewImage = useMemo(() => {
-    if (!mapInfo || !mapData || !viewRect) return null
+    if (!mapInfo || !mapData || !viewRect) {
+      mapLog.error(
+        'mapInfo or mapData or viewRect is undefined, image return null',
+      )
+      return null
+    }
     const pixels = new Uint8Array(CANVAS_WIDTH * CANVAS_HEIGHT * 4) // 初始化像素数组
     const scale = userTransform.resolution / mapInfo.resolution
 
@@ -90,14 +95,14 @@ export function useMap() {
       CANVAS_WIDTH * 4,
     )
     return img
-  }, [viewRect, mapInfo.resolution, userTransform.resolution])
+  }, [viewRect, mapInfo.resolution, userTransform.resolution, mapData])
 
   /**
    * 拉取地图信息
    * mapData：网格地图二进制数据
    */
   const fetchImageData = async () => {
-    mapLog.info('start fetching map')
+    mapLog.debug('start fetching map')
     if (!drawingMap) {
       return Promise.reject('drawingMap is undefined')
     }
