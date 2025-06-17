@@ -8,8 +8,10 @@ import {
 } from '@/store/foxglove.trunk'
 import { AppDispatch } from '@/store/store'
 import { MessageData } from '@foxglove/ws-protocol'
+import { update } from 'lodash'
 import { useEffect, useRef, useState } from 'react'
 import { View, Text, StyleSheet } from 'react-native'
+import Icon from 'react-native-vector-icons/FontAwesome'
 import { useDispatch } from 'react-redux'
 
 /**
@@ -24,24 +26,32 @@ const INFO_TOPICS = {
   DIAGNOSTICS: '/diagnostics',
 }
 
-const INFO_LABEL: { [key: string]: string } = {
-  imu: 'IMU' as const,
-  batteryVoltage: 'Battery Voltage' as const,
-  odometer: 'Odometer' as const,
-  joint: 'Joint' as const,
-  diagnostics: 'Diagnostics' as const,
+const INFO_ICON: { [key: string]: string } = {
+  // imu: 'IMU' as const,
+  batteryVoltage: 'battery-4' as const,
+  // odometer: 'Odometer' as const,
+  // joint: 'Joint' as const,
+  // diagnostics: 'Diagnostics' as const,
 }
 
 interface IInfoCard {
-  label: string
+  type: string
   value: any
 }
 function InfoCard(props: IInfoCard) {
-  const { label, value } = props
+  const { type, value } = props
+  const iconName = INFO_ICON[type]
+  let valueText = ''
+  switch (type) {
+    case 'batteryVoltage':
+      valueText = Number(value.data).toFixed(2) + 'V'
+  }
   return (
-    <View key={label} style={styles.infoCard}>
-      <Text style={styles.cardLabel}>{label}</Text>
-      <Text style={styles.cardValue}>{value}</Text>
+    <View key={iconName} style={[styles.card]}>
+      <Icon name={iconName} size={30} color='#007bff' style={styles.cardIcon} />
+      <Text style={styles.cardTitle} numberOfLines={1}>
+        {JSON.stringify(valueText)}
+      </Text>
     </View>
   )
 }
@@ -49,7 +59,7 @@ function InfoCard(props: IInfoCard) {
 export default function Status() {
   const dispatch = useDispatch<AppDispatch>()
   const InfoIds = useRef<any>(undefined)
-  const InfoValue = useRef<any>({
+  const [InfoValue, updateInfoValue] = useState<any>({
     imu: {},
     batteryVoltage: {},
     odometer: {},
@@ -72,35 +82,60 @@ export default function Status() {
         const parseData: any = await dispatch(
           readMsgWithSubId(subscriptionId, data),
         )
-        InfoValue.current.imu = parseData
+        updateInfoValue((prev: any) => {
+          return {
+            ...prev,
+            imu: parseData,
+          }
+        })
         break
       }
       case InfoIds.current.batteryVoltageId: {
         const parseData: any = await dispatch(
           readMsgWithSubId(subscriptionId, data),
         )
-        InfoValue.current.batteryVoltage = parseData
+        updateInfoValue((prev: any) => {
+          return {
+            ...prev,
+            batteryVoltage: parseData,
+          }
+        })
         break
       }
       case InfoIds.current.odometerId: {
         const parseData: any = await dispatch(
           readMsgWithSubId(subscriptionId, data),
         )
-        InfoValue.current.odometer = parseData
+        updateInfoValue((prev: any) => {
+          return {
+            ...prev,
+            odometer: parseData,
+          }
+        })
         break
       }
       case InfoIds.current.jointId: {
         const parseData: any = await dispatch(
           readMsgWithSubId(subscriptionId, data),
         )
-        InfoValue.current.joint = parseData
+        updateInfoValue((prev: any) => {
+          return {
+            ...prev,
+            joint: parseData,
+          }
+        })
         break
       }
       case InfoIds.current.diagnosticsId: {
         const parseData: any = await dispatch(
           readMsgWithSubId(subscriptionId, data),
         )
-        InfoValue.current.diagnostics = parseData
+        updateInfoValue((prev: any) => {
+          return {
+            ...prev,
+            diagnostics: parseData,
+          }
+        })
         break
       }
     }
@@ -147,32 +182,42 @@ export default function Status() {
   }, [])
   return (
     <ImageContainer>
-      {Object.keys(InfoValue).map(key => {
-        console.log('render key', key)
-        return (
-          <InfoCard
-            key={key}
-            label={INFO_LABEL[key]}
-            value={InfoValue.current[key]}
-          />
-        )
+      {Object.keys(INFO_ICON).map(key => {
+        return <InfoCard key={key} type={key} value={InfoValue[key]} />
       })}
     </ImageContainer>
   )
 }
 
 const styles = StyleSheet.create({
-  infoCard: {
-    flex: 1,
-    justifyContent: 'center',
+  card: {
+    width: 220,
+    backgroundColor: '#f8f8f8',
+    borderRadius: 10,
+    padding: 30,
+    marginBottom: 20,
+    elevation: 3, // 添加阴影效果
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: 20,
   },
-  cardLabel: {
-    fontSize: 16,
+  cardIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 5,
+    marginRight: 15,
+    paddingTop: 5,
+  },
+  cardText: {
+    flex: 1,
+  },
+  cardTitle: {
+    fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  cardValue: {
-    fontSize: 14,
+    width: '55%',
   },
 })
