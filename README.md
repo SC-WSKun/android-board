@@ -102,6 +102,16 @@
 
    本项目使用expo-av播放音频，需要在 prebuild 运行。
 
+5. 打包后无法链接WS
+
+   1. 在android/app/src/main/AndroidManifest.xml中的application标签添加`android:usesCleartextTraffic="true"`和
+   ```
+   <uses-library
+      android:name="org.apache.http.legacy"
+      android:required="false" />
+   ```
+
+
 ## 资源链接
 
 1. [腾讯云Deepseek API](https://cloud.tencent.com/document/product/1772/115963)
