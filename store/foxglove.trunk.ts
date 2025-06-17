@@ -71,7 +71,7 @@ export const initClient =
         reject('foxgloveClient init error')
       })
 
-      clientInstance.on('close', () => {
+      clientInstance.on('close', e => {
         dispatch(setClient(null))
         dispatch(setConnected(false))
       })
@@ -298,6 +298,7 @@ export const listenMessageByTopic =
       data,
     }: MessageData) => {
       if (!subs[topic]) {
+        client?.off('message', msgHandler)
         return
       }
       if (subscriptionId === subs[topic].subId) {
@@ -318,7 +319,7 @@ export const listenMessage = (callback: (...args: any) => void) => {
     return
   }
   const msgHandler = ({ op, subscriptionId, timestamp, data }: MessageData) => {
-    callback(op, subscriptionId, timestamp, data)
+    callback({ op, subscriptionId, timestamp, data })
   }
   client.on('message', msgHandler)
 }

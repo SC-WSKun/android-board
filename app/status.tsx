@@ -9,19 +9,41 @@ import {
 import { AppDispatch } from '@/store/store'
 import { MessageData } from '@foxglove/ws-protocol'
 import { useEffect, useRef, useState } from 'react'
+import { View, Text, StyleSheet } from 'react-native'
 import { useDispatch } from 'react-redux'
 
 /**
  * 状态页面
- * 目前来看
+ * 目前感觉没必要把这些状态扔到redux里面，这些数据其他页面用不上
  */
-
 const INFO_TOPICS = {
   IMU: '/szarbot_control/imu_data',
   BATTERY_VOLTAGE: '/szarbot_control/battery_voltage',
   ODOMETRY: '/odometry/filtered',
   JOINT: '/joint_states',
   DIAGNOSTICS: '/diagnostics',
+}
+
+const INFO_LABEL: { [key: string]: string } = {
+  imu: 'IMU' as const,
+  batteryVoltage: 'Battery Voltage' as const,
+  odometer: 'Odometer' as const,
+  joint: 'Joint' as const,
+  diagnostics: 'Diagnostics' as const,
+}
+
+interface IInfoCard {
+  label: string
+  value: any
+}
+function InfoCard(props: IInfoCard) {
+  const { label, value } = props
+  return (
+    <View key={label} style={styles.infoCard}>
+      <Text style={styles.cardLabel}>{label}</Text>
+      <Text style={styles.cardValue}>{value}</Text>
+    </View>
+  )
 }
 
 export default function Status() {
@@ -123,5 +145,34 @@ export default function Status() {
       unSubStatusTopics()
     }
   }, [])
-  return <ImageContainer>{}</ImageContainer>
+  return (
+    <ImageContainer>
+      {Object.keys(InfoValue).map(key => {
+        console.log('render key', key)
+        return (
+          <InfoCard
+            key={key}
+            label={INFO_LABEL[key]}
+            value={InfoValue.current[key]}
+          />
+        )
+      })}
+    </ImageContainer>
+  )
 }
+
+const styles = StyleSheet.create({
+  infoCard: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  cardLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  cardValue: {
+    fontSize: 14,
+  },
+})
