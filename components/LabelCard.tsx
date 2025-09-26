@@ -2,7 +2,7 @@ import { callService } from '@/store/foxglove.trunk'
 import { AppDispatch } from '@/store/store'
 import { useEffect } from 'react'
 import { Image, Pressable, StyleSheet } from 'react-native'
-import { View } from 'react-native-reanimated/lib/typescript/Animated'
+import { View, Text } from 'react-native-reanimated/lib/typescript/Animated'
 import { useDispatch } from 'react-redux'
 interface Props {
   imgUrl?: string
@@ -11,7 +11,7 @@ interface Props {
 }
 export function LabelCard(props: Props) {
   const dispatch = useDispatch<AppDispatch>()
-  const { imgUrl, clickHandler } = props
+  const { imgUrl, labelName, clickHandler } = props
 
   useEffect(() => {
     dispatch(callService('/label_manager/get_labels', {})).then(res => {
@@ -22,6 +22,7 @@ export function LabelCard(props: Props) {
     <Pressable onPress={clickHandler}>
       <View style={styles.labelCard}>
         <Image source={{ uri: imgUrl }} />
+        <Text>{labelName}</Text>
       </View>
     </Pressable>
   )

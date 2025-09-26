@@ -1,7 +1,5 @@
 package com.anonymous.androidboard
 
-import com.anonymous.androidboard.WakeUpPackage
-
 import android.app.Application
 import android.content.res.Configuration
 
@@ -27,7 +25,6 @@ class MainApplication : Application(), ReactApplication {
             val packages = PackageList(this).packages
             // Packages that cannot be autolinked yet can be added manually here, for example:
             // packages.add(new MyReactNativePackage());
-            packages.add(WakeUpPackage())
             return packages
           }
 
