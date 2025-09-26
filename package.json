@@ -64,7 +64,8 @@
     "react-redux": "^9.2.0",
     "redux": "^5.0.1",
     "socket.io-client": "^4.8.1",
-    "text-encoding": "^0.7.0"
+    "text-encoding": "^0.7.0",
+    "expo-speech": "~13.0.1"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

@@ -13,7 +13,7 @@ import { Buffer } from 'buffer'
 import store from '@/store/store'
 import Toast from 'react-native-toast-message'
 import { useColorScheme } from '@/hooks/useColorScheme'
-import SocketProxy, { AUDIO_FILE_PATH } from '@/utils/TtsSocketProxy'
+// import SocketProxy, { AUDIO_FILE_PATH } from '@/utils/TtsSocketProxy'
 
 // Buffer polyfill
 global.Buffer = Buffer
@@ -60,7 +60,8 @@ export default function RootLayout() {
     return null
   }
 
-  SocketProxy.init()
+  // 目前使用Expo-Speech，暂时不用火山引擎合成
+  // SocketProxy.init()
 
   return (
     <>
