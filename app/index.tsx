@@ -1,9 +1,13 @@
+import { useEffect } from 'react'
 import { StyleSheet, View, ImageBackground, Text } from 'react-native'
 import { Link } from 'expo-router'
+import * as Speech from 'expo-speech'
 import { NAVIGATION_MAP } from './_layout'
-import { AudioRecordBtn } from '@/components/AudioRecordBtn'
 
 export default function HomeScreen() {
+  useEffect(() => {
+    Speech.speak('欢迎使用迎宾机器人')
+  }, [])
   return (
     <View style={styles.container}>
       <ImageBackground

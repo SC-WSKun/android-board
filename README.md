@@ -28,8 +28,8 @@
 - [ ] 完成地图标点交互
 - [x] 完成标点导航交互
 - 完成机器人对话交互
-   - [ ] 百度语音唤醒（原计划用讯飞的SDK，但是对于个人开发者太贵了！）
    - [x] 火山语音合成
+   - [x] Expo-Speech
 - [ ] 引入 react-compiler
 
 ## Get started
@@ -79,7 +79,8 @@
    }
    ```
 4. 开发这个项目的时候正好 expo 推出 SDK53。新版本把音频库 expo-av 换成 expo-audio 了，本来想一起迁移的，但是发现 react-native-skia 不太兼容一起升级。能不能凑合用还没试过，因此先保守用着 SDK52 + expo-av 的方式。后面等这些库都升级了可以迁移到 SDK53。
-5. 语音合成采用的是火山引擎的大模型语音合成，但是大模型语音合成流式只支持ws，RN又不支持ws鉴权，所以做了ws代理。现在已经进行了API封装，可以直接使用`SocketProxy.sendTtsText('要合成的文本')`，会自己调用`TtsPlayer.playSound`播放语音。
+5. ~~语音合成采用的是火山引擎的大模型语音合成，但是大模型语音合成流式只支持ws，RN又不支持ws鉴权，所以做了ws代理。现在已经进行了API封装，可以直接使用`SocketProxy.sendTtsText('要合成的文本')`，会自己调用`TtsPlayer.playSound`播放语音。~~
+6. 语音合成使用Expo-Speech库进行合成，如果没有声音，需要安装本项目根目录的TTS引擎，或者自行安装GoogleTTS引擎。可以直接参考首页的音频合成方法。
 
 ## 踩的一些坑
 
