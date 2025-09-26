@@ -1,5 +1,6 @@
 import React from 'react'
 import { View, StyleSheet, TouchableOpacity } from 'react-native'
+import * as Speech from 'expo-speech'
 import Icon from 'react-native-vector-icons/FontAwesome'
 import Toast from 'react-native-toast-message'
 import { useDrawContext } from '@/store/draw.slice'
@@ -31,6 +32,7 @@ const MapToolBox = React.memo(() => {
             text1: 'You Have Switched To Pointer Mode',
           })
           updateTapMethod('POINTER')
+          Speech.speak('切换到光标模式')
           //todo: unsubscribe car route & nav topic
         }}
       >
@@ -57,6 +59,7 @@ const MapToolBox = React.memo(() => {
             text1: 'You Have Switched To Redirect Mode',
           })
           updateTapMethod('REDIRECT')
+          Speech.speak('切换到重定位模式')
           //todo: unsubscribe car route & nav topic
         }}
       >
@@ -86,6 +89,7 @@ const MapToolBox = React.memo(() => {
           advertiseNavTopic()
           subscribeCarRoute()
           updateTapMethod('NAVIGATION')
+          Speech.speak('切换到导航模式')
         }}
       >
         <Icon

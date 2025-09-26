@@ -1,17 +1,11 @@
 import { useEffect } from 'react'
 import { View, StyleSheet, Dimensions } from 'react-native'
 import { Canvas, Image } from '@shopify/react-native-skia'
-import LaserPointAtlas from './LaserPointAtlas'
 import { useDispatch } from 'react-redux'
 import { AppDispatch } from '@/store/store'
 import { useDrawContext } from '@/store/draw.slice'
 import { useTransformContext } from '@/store/transform.slice'
 import { callService } from '@/store/foxglove.trunk'
-import { useCar } from '@/hooks/useCar'
-import { useMap } from '@/hooks/useMap'
-import { useLaser } from '@/hooks/useLaser'
-import { CarIcon } from './CarIcon'
-import { CarRoute } from './CarRoute'
 import {
   GestureHandlerRootView,
   GestureDetector,
@@ -23,9 +17,16 @@ import Animated, {
   useDerivedValue,
   useSharedValue,
 } from 'react-native-reanimated'
+import * as Speech from 'expo-speech'
 import { mapToCanvas } from '@/utils/coodinate'
-import MapToolBox from './MapToolBox'
+import { useCar } from '@/hooks/useCar'
+import { useMap } from '@/hooks/useMap'
+import { useLaser } from '@/hooks/useLaser'
 import { useNavigation } from '@/hooks/useNavigation'
+import LaserPointAtlas from './LaserPointAtlas'
+import MapToolBox from './MapToolBox'
+import { CarIcon } from './CarIcon'
+import { CarRoute } from './CarRoute'
 
 interface IRobotMapProps {
   plugins: string[]
@@ -223,6 +224,7 @@ export function RobotMap(props: IRobotMapProps) {
           mode: 2,
         }),
       )
+      Speech.speak('现在是导航模式')
       subscribeCarPosition()
       subscribeTransforms()
     })

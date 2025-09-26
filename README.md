@@ -29,7 +29,7 @@
 - [x] 完成标点导航交互
 - 完成机器人对话交互
    - [x] 火山语音合成
-   - [ ] Expo-Speech
+   - [x] Expo-Speech
 - [ ] 引入 react-compiler
 
 ## Get started
