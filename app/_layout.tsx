@@ -25,6 +25,7 @@ const ROUTER_MAP = {
   SETTING: 'setting' as const,
   NOT_FOUND: '+not-found' as const,
   PATROL: 'patrol' as const,
+  TEST: 'test' as const,
 }
 
 // 使用映射生成 NAVIGATION_MAP，因为 expo-router 跳转的时候需要使用 / 开头
@@ -39,6 +40,7 @@ export const NAVIGATION_MAP: NavigationMapType = {
   NAVIGATION: `/${ROUTER_MAP.NAVIGATION}`,
   SETTING: `/${ROUTER_MAP.SETTING}`,
   NOT_FOUND: `/${ROUTER_MAP.NOT_FOUND}`,
+  TEST: `${ROUTER_MAP.TEST}`,
 }
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
