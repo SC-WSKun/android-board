@@ -6,19 +6,26 @@ import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withTiming, } from
  * @brief Props for the NativeNipple component.
  * @param radius The radius of the outer circle of the nipple.
  * @param minActivationDistanceFactor The factor of the radius that the gesture needs to travel to activate. Defaults to 0.05.
- * @param onUpdate A callback function that is called when the nipple is moved. It receives an object with the x and y offset from the center.
+ * @param onUpdate A callback function that is called when the nipple is moved. It receives an object with the relative x and y offset from the center.
  *        *---> x
  *        |
  *        v y
+ * @param lock Lock nipple axis.
  */
 export interface NativeNippleProps {
   radius: number
   minActivationDistanceFactor?: number
+  lock?: 'x' | 'y' | undefined | false
   onUpdate?: (data: { x: number; y: number }) => void
 }
 
 export default function NativeNipple(props: NativeNippleProps) {
-  const { radius, minActivationDistanceFactor = 0.05, onUpdate } = props
+  const {
+    radius,
+    minActivationDistanceFactor = 0.05,
+    onUpdate,
+    lock = { x: false, y: false },
+  } = props
   const outerSize = radius * 2
   const innerSize = radius
 
@@ -30,6 +37,15 @@ export default function NativeNipple(props: NativeNippleProps) {
     .maxPointers(1)
     .minDistance(radius * minActivationDistanceFactor)
     .onUpdate(event => {
+      // 处理轴锁定
+      if (lock === 'x') {
+        event.translationX = 0
+      }
+      if (lock === 'y') {
+        event.translationY = 0
+      }
+
+      // 处理最大拉动距离
       const distance = Math.sqrt(
         event.translationX * event.translationX +
           event.translationY * event.translationY,
@@ -46,7 +62,10 @@ export default function NativeNipple(props: NativeNippleProps) {
         translateY.value = event.translationY
       }
       if (onUpdate) {
-        runOnJS(onUpdate)({ x: translateX.value, y: translateY.value })
+        runOnJS(onUpdate)({
+          x: translateX.value / radius,
+          y: translateY.value / radius,
+        })
       }
     })
     .onEnd(() => {
@@ -84,6 +103,7 @@ export default function NativeNipple(props: NativeNippleProps) {
               height: innerSize,
               borderRadius: innerSize / 2,
               backgroundColor: 'rgba(0,0,0,0.5)',
+              cursor: 'pointer',
             },
             animatedStyle,
           ]}
