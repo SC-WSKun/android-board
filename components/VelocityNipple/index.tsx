@@ -3,8 +3,9 @@ import { AppDispatch } from '@/store/store'
 import NativeNipple from '@/components/NativeNipple'
 import { advertiseTopic, publishMessage } from '@/store/foxglove.trunk'
 import { throttle } from 'es-toolkit'
-import { useCallback, useEffect } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import { View } from 'react-native'
+import { GestureHandlerRootView } from 'react-native-gesture-handler'
 
 const CMD_VEL_TOPIC = '/cmd_vel'
 const CMD_VEL_CONFIG = {
@@ -16,9 +17,22 @@ const CMD_VEL_CONFIG = {
   schemaEncoding: 'ros2msg',
 }
 
+const VELOCITY_EFF = 0.5
+const ANGULAR_EFF = 1
 export default function VelocityNipple() {
   const dispatch = useDispatch<AppDispatch>()
-
+  const vectorRef = useRef<VelocityControlVec>({
+    linear: {
+      x: 0,
+      y: 0,
+      z: 0,
+    },
+    angular: {
+      x: 0,
+      y: 0,
+      z: 0,
+    },
+  })
   useEffect(() => {
     dispatch(advertiseTopic(CMD_VEL_CONFIG))
     console.log('register cmd_vel topic')
@@ -27,11 +41,15 @@ export default function VelocityNipple() {
   const handleVelUpdate = throttle(
     useCallback(
       (data: { x: number; y: number }) => {
-        dispatch(
-          publishMessage('/cmd_vel', {
-            linear: { x: -data.y, y: 0, z: 0 },
-          }),
-        )
+        vectorRef.current = {
+          ...vectorRef.current,
+          linear: {
+            x: -data.y * VELOCITY_EFF,
+            y: 0,
+            z: 0,
+          },
+        }
+        dispatch(publishMessage('/cmd_vel', vectorRef.current))
       },
       [dispatch],
     ),
@@ -40,11 +58,15 @@ export default function VelocityNipple() {
   const handleAngleUpdate = throttle(
     useCallback(
       (data: { x: number; y: number }) => {
-        dispatch(
-          publishMessage('/cmd_vel', {
-            angular: { x: 0, y: 0, z: -data.x },
-          }),
-        )
+        vectorRef.current = {
+          ...vectorRef.current,
+          angular: {
+            x: 0,
+            y: 0,
+            z: -data.x * ANGULAR_EFF,
+          },
+        }
+        dispatch(publishMessage('/cmd_vel', vectorRef.current))
       },
       [dispatch],
     ),
@@ -52,14 +74,16 @@ export default function VelocityNipple() {
   )
 
   return (
-    <View
-      style={{
-        display: 'flex',
-        flexDirection: 'row',
-      }}
-    >
-      <NativeNipple radius={72} onUpdate={handleVelUpdate} lock='x' />
-      <NativeNipple radius={72} onUpdate={handleAngleUpdate} lock='y' />
-    </View>
+    <GestureHandlerRootView>
+      <View
+        style={{
+          display: 'flex',
+          flexDirection: 'row',
+        }}
+      >
+        <NativeNipple radius={72} onUpdate={handleVelUpdate} lock='x' />
+        <NativeNipple radius={72} onUpdate={handleAngleUpdate} lock='y' />
+      </View>
+    </GestureHandlerRootView>
   )
 }

@@ -96,3 +96,14 @@ type Header = {
   frame_id: string
   stamp: Stamp
 }
+
+type Vector = {
+  x: number
+  y: number
+  z: number
+}
+
+type VelocityControlVec = {
+  linear: Vector
+  angular: Vector
+}
