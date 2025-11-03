@@ -28,6 +28,9 @@ export default function HomeScreen() {
           <Link style={styles.button} href={NAVIGATION_MAP.SETTING}>
             设置
           </Link>
+          <Link style={styles.button} href={NAVIGATION_MAP.TEST}>
+            测试
+          </Link>
         </View>
       </ImageBackground>
     </View>
