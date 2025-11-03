@@ -1,25 +1,25 @@
 import { AppDispatch, RootState } from './store'
 import {
-  FoxgloveClient,
   Channel,
   ClientChannelWithoutId,
-  Service,
+  FoxgloveClient,
   MessageData,
+  Service,
 } from '@foxglove/ws-protocol'
-import { MessageWriter, MessageReader } from '@foxglove/rosmsg2-serialization'
+import { MessageReader, MessageWriter } from '@foxglove/rosmsg2-serialization'
 import { parse as parseMessageDefinition } from '@foxglove/rosmsg'
 import _ from 'lodash'
 import {
-  setClient,
-  setChannels,
-  setServices,
-  addSub,
-  removeSub,
   addAdvertisedChannel,
-  removeAdvertisedChannel,
-  setMsgEncoding,
+  addSub,
   incrementCallServiceId,
+  removeAdvertisedChannel,
+  removeSub,
+  setChannels,
+  setClient,
   setConnected,
+  setMsgEncoding,
+  setServices,
 } from './foxglove.slice'
 import { rosLog } from '@/log/logger'
 
@@ -33,7 +33,8 @@ export const initClient =
   async (dispatch: AppDispatch, getState: () => RootState) => {
     return new Promise((resolve, reject) => {
       const socket = new WebSocket(`ws://${wsUrl}:8765`, [
-        FoxgloveClient.SUPPORTED_SUBPROTOCOL,
+        // FoxgloveClient.SUPPORTED_SUBPROTOCOL,
+        'foxglove.sdk.v1' as any,
       ])
       const clientInstance = new FoxgloveClient({
         ws: socket,
